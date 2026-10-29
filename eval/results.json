@@ -1,0 +1,296 @@
+{
+  "summary": {
+    "adapter": "mock",
+    "images": 10,
+    "items_scored": 40,
+    "item_accuracy": 1.0,
+    "images_fully_correct": 10,
+    "expected_unsure_items": 8,
+    "unsure_recall": 1.0,
+    "predicted_unsure_items": 8,
+    "unsure_precision": 1.0,
+    "false_pass_count": 0
+  },
+  "rows": [
+    {
+      "image": "01_pass",
+      "item": "chip_present",
+      "expected": "PASS",
+      "predicted": "PASS",
+      "correct": true
+    },
+    {
+      "image": "01_pass",
+      "item": "led_left_of_button",
+      "expected": "PASS",
+      "predicted": "PASS",
+      "correct": true
+    },
+    {
+      "image": "01_pass",
+      "item": "screws_aligned",
+      "expected": "PASS",
+      "predicted": "PASS",
+      "correct": true
+    },
+    {
+      "image": "01_pass",
+      "item": "screws_count",
+      "expected": "PASS",
+      "predicted": "PASS",
+      "correct": true
+    },
+    {
+      "image": "02_missing_screw",
+      "item": "chip_present",
+      "expected": "PASS",
+      "predicted": "PASS",
+      "correct": true
+    },
+    {
+      "image": "02_missing_screw",
+      "item": "led_left_of_button",
+      "expected": "PASS",
+      "predicted": "PASS",
+      "correct": true
+    },
+    {
+      "image": "02_missing_screw",
+      "item": "screws_aligned",
+      "expected": "PASS",
+      "predicted": "PASS",
+      "correct": true
+    },
+    {
+      "image": "02_missing_screw",
+      "item": "screws_count",
+      "expected": "FAIL",
+      "predicted": "FAIL",
+      "correct": true
+    },
+    {
+      "image": "03_extra_screw",
+      "item": "chip_present",
+      "expected": "PASS",
+      "predicted": "PASS",
+      "correct": true
+    },
+    {
+      "image": "03_extra_screw",
+      "item": "led_left_of_button",
+      "expected": "PASS",
+      "predicted": "PASS",
+      "correct": true
+    },
+    {
+      "image": "03_extra_screw",
+      "item": "screws_aligned",
+      "expected": "PASS",
+      "predicted": "PASS",
+      "correct": true
+    },
+    {
+      "image": "03_extra_screw",
+      "item": "screws_count",
+      "expected": "FAIL",
+      "predicted": "FAIL",
+      "correct": true
+    },
+    {
+      "image": "04_misaligned_screw",
+      "item": "chip_present",
+      "expected": "PASS",
+      "predicted": "PASS",
+      "correct": true
+    },
+    {
+      "image": "04_misaligned_screw",
+      "item": "led_left_of_button",
+      "expected": "PASS",
+      "predicted": "PASS",
+      "correct": true
+    },
+    {
+      "image": "04_misaligned_screw",
+      "item": "screws_aligned",
+      "expected": "FAIL",
+      "predicted": "FAIL",
+      "correct": true
+    },
+    {
+      "image": "04_misaligned_screw",
+      "item": "screws_count",
+      "expected": "PASS",
+      "predicted": "PASS",
+      "correct": true
+    },
+    {
+      "image": "05_blank_frame",
+      "item": "chip_present",
+      "expected": "UNSURE",
+      "predicted": "UNSURE",
+      "correct": true
+    },
+    {
+      "image": "05_blank_frame",
+      "item": "led_left_of_button",
+      "expected": "UNSURE",
+      "predicted": "UNSURE",
+      "correct": true
+    },
+    {
+      "image": "05_blank_frame",
+      "item": "screws_aligned",
+      "expected": "UNSURE",
+      "predicted": "UNSURE",
+      "correct": true
+    },
+    {
+      "image": "05_blank_frame",
+      "item": "screws_count",
+      "expected": "UNSURE",
+      "predicted": "UNSURE",
+      "correct": true
+    },
+    {
+      "image": "06_led_wrong_side",
+      "item": "chip_present",
+      "expected": "PASS",
+      "predicted": "PASS",
+      "correct": true
+    },
+    {
+      "image": "06_led_wrong_side",
+      "item": "led_left_of_button",
+      "expected": "FAIL",
+      "predicted": "FAIL",
+      "correct": true
+    },
+    {
+      "image": "06_led_wrong_side",
+      "item": "screws_aligned",
+      "expected": "PASS",
+      "predicted": "PASS",
+      "correct": true
+    },
+    {
+      "image": "06_led_wrong_side",
+      "item": "screws_count",
+      "expected": "PASS",
+      "predicted": "PASS",
+      "correct": true
+    },
+    {
+      "image": "07_chip_missing",
+      "item": "chip_present",
+      "expected": "FAIL",
+      "predicted": "FAIL",
+      "correct": true
+    },
+    {
+      "image": "07_chip_missing",
+      "item": "led_left_of_button",
+      "expected": "PASS",
+      "predicted": "PASS",
+      "correct": true
+    },
+    {
+      "image": "07_chip_missing",
+      "item": "screws_aligned",
+      "expected": "PASS",
+      "predicted": "PASS",
+      "correct": true
+    },
+    {
+      "image": "07_chip_missing",
+      "item": "screws_count",
+      "expected": "PASS",
+      "predicted": "PASS",
+      "correct": true
+    },
+    {
+      "image": "08_tiny_screws",
+      "item": "chip_present",
+      "expected": "PASS",
+      "predicted": "PASS",
+      "correct": true
+    },
+    {
+      "image": "08_tiny_screws",
+      "item": "led_left_of_button",
+      "expected": "PASS",
+      "predicted": "PASS",
+      "correct": true
+    },
+    {
+      "image": "08_tiny_screws",
+      "item": "screws_aligned",
+      "expected": "UNSURE",
+      "predicted": "UNSURE",
+      "correct": true
+    },
+    {
+      "image": "08_tiny_screws",
+      "item": "screws_count",
+      "expected": "UNSURE",
+      "predicted": "UNSURE",
+      "correct": true
+    },
+    {
+      "image": "09_no_screws",
+      "item": "chip_present",
+      "expected": "PASS",
+      "predicted": "PASS",
+      "correct": true
+    },
+    {
+      "image": "09_no_screws",
+      "item": "led_left_of_button",
+      "expected": "PASS",
+      "predicted": "PASS",
+      "correct": true
+    },
+    {
+      "image": "09_no_screws",
+      "item": "screws_aligned",
+      "expected": "UNSURE",
+      "predicted": "UNSURE",
+      "correct": true
+    },
+    {
+      "image": "09_no_screws",
+      "item": "screws_count",
+      "expected": "FAIL",
+      "predicted": "FAIL",
+      "correct": true
+    },
+    {
+      "image": "10_only_screws",
+      "item": "chip_present",
+      "expected": "FAIL",
+      "predicted": "FAIL",
+      "correct": true
+    },
+    {
+      "image": "10_only_screws",
+      "item": "led_left_of_button",
+      "expected": "UNSURE",
+      "predicted": "UNSURE",
+      "correct": true
+    },
+    {
+      "image": "10_only_screws",
+      "item": "screws_aligned",
+      "expected": "PASS",
+      "predicted": "PASS",
+      "correct": true
+    },
+    {
+      "image": "10_only_screws",
+      "item": "screws_count",
+      "expected": "PASS",
+      "predicted": "PASS",
+      "correct": true
+    }
+  ]
+}

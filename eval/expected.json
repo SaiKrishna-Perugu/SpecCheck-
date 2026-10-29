@@ -1,0 +1,62 @@
+{
+  "01_pass": {
+    "screws_count": "PASS",
+    "led_left_of_button": "PASS",
+    "chip_present": "PASS",
+    "screws_aligned": "PASS"
+  },
+  "02_missing_screw": {
+    "screws_count": "FAIL",
+    "led_left_of_button": "PASS",
+    "chip_present": "PASS",
+    "screws_aligned": "PASS"
+  },
+  "03_extra_screw": {
+    "screws_count": "FAIL",
+    "led_left_of_button": "PASS",
+    "chip_present": "PASS",
+    "screws_aligned": "PASS"
+  },
+  "04_misaligned_screw": {
+    "screws_count": "PASS",
+    "led_left_of_button": "PASS",
+    "chip_present": "PASS",
+    "screws_aligned": "FAIL"
+  },
+  "05_blank_frame": {
+    "screws_count": "UNSURE",
+    "led_left_of_button": "UNSURE",
+    "chip_present": "UNSURE",
+    "screws_aligned": "UNSURE"
+  },
+  "06_led_wrong_side": {
+    "screws_count": "PASS",
+    "led_left_of_button": "FAIL",
+    "chip_present": "PASS",
+    "screws_aligned": "PASS"
+  },
+  "07_chip_missing": {
+    "screws_count": "PASS",
+    "led_left_of_button": "PASS",
+    "chip_present": "FAIL",
+    "screws_aligned": "PASS"
+  },
+  "08_tiny_screws": {
+    "screws_count": "UNSURE",
+    "led_left_of_button": "PASS",
+    "chip_present": "PASS",
+    "screws_aligned": "UNSURE"
+  },
+  "09_no_screws": {
+    "screws_count": "FAIL",
+    "led_left_of_button": "PASS",
+    "chip_present": "PASS",
+    "screws_aligned": "UNSURE"
+  },
+  "10_only_screws": {
+    "screws_count": "PASS",
+    "led_left_of_button": "UNSURE",
+    "chip_present": "FAIL",
+    "screws_aligned": "PASS"
+  }
+}

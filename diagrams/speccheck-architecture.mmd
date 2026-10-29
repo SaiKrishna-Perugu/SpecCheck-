@@ -1,0 +1,14 @@
+flowchart LR
+    U[User: hands busy] -->|photo / webcam| API[FastAPI backend]
+    U -->|voice command| API
+    API -->|audio| TR[Transcriber adapter]
+    TR -->|transcript| AG[Agent loop]
+    API -->|image + YAML spec| AG
+    AG -->|text prompts| SG[Segmenter adapter]
+    SG -->|masks + confidence| CK[Deterministic checks]
+    CK -->|verdicts| RS[Reasoner adapter: explain]
+    CK -->|low confidence| RC[request_recapture: max 3]
+    RC -->|re-capture + reason| U
+    CK --> RP[build_report: HTML + JSON]
+    RS --> RP
+    RP --> U

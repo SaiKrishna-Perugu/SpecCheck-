@@ -70,11 +70,33 @@ completed from the official docs. Never commit `.env` or a real
   wording is not yet reinterpreted by a model.
 - Position checks compare centroids of the first target/reference instance;
   multi-instance spatial reasoning is out of scope.
-- No eval numbers are claimed yet: the `eval/` milestone (10 labelled images +
-  accuracy script, including correct-UNSURE rate) is still to be built, and
-  the README will only report what that script actually outputs.
+- Eval (below) runs only on synthetic images drawn from the same colour
+  palette the mock segmenter reads, so its scores are a pipeline sanity
+  check, not real-world accuracy. Expect them to drop sharply on real
+  photos until the SAM 3.1 adapter lands.
+
+## Eval
+
+10 synthetic images with labelled per-item outcomes live in
+[eval/](eval/). Reproduce with:
+
+```powershell
+uv run python eval/generate_eval.py
+uv run python eval/run_eval.py
+```
+
+Actual output of the last run (mock adapter, `eval/results.json`):
+40/40 checklist items correct (item accuracy 1.0), 10/10 images fully
+correct, UNSURE recall 1.0 (8/8 expected-UNSURE items), UNSURE precision
+1.0 (8/8 predicted-UNSURE items), 0 false PASSes. Read the limitation
+above before quoting these: the images are synthetic and palette-matched
+to the mock segmenter by construction.
 
 ## Architecture
+
+Full diagram and component table: [docs/architecture.md](docs/architecture.md).
+Demo walkthrough: [docs/demo_script.md](docs/demo_script.md).
+M1 smoke script (one call per adapter): `uv run python scripts/meta_smoke.py`.
 
 ```
 voice -> [Transcriber adapter] -> transcript/intent

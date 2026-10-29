@@ -34,10 +34,19 @@ def run_check(
     transcript: str | None = None,
     attempt: int = 1,
     max_attempts: int = MAX_ATTEMPTS,
+    only_item_ids: set[str] | None = None,
 ) -> Report:
     """Run one capture through segment -> measure -> compare -> report."""
     seg = segment(image, checklist, segmenter)
-    results = compare_to_spec(checklist, seg)
+    effective = checklist
+    if only_item_ids:
+        from dataclasses import replace as _replace
+
+        effective = _replace(
+            checklist,
+            items=tuple(i for i in checklist.items if i.id in only_item_ids),
+        )
+    results = compare_to_spec(effective, seg)
     explanation = reasoner.explain(results, transcript)
     for result in results:
         if not result.explanation:

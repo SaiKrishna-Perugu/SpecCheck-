@@ -50,6 +50,11 @@
       <button id="sampleMissing" type="button">Load sample: missing screw</button>
       <button id="sampleBlank" type="button">Load sample: blank (UNSURE)</button>
     </div>
+    <label for="gallery">All sample + eval images</label>
+    <div class="row">
+      <select id="gallery" style="flex:1; font:inherit; padding:8px;"></select>
+      <button id="loadGallery" type="button">Load selected</button>
+    </div>
     <img id="preview" class="preview" alt="Selected capture preview" hidden>
     <h2 style="margin-top:18px;">2. Speak (or type) the command</h2>
     <div class="row">
@@ -57,6 +62,8 @@
       <span id="micState" class="note">mic idle</span>
     </div>
     <input id="transcript" type="text" placeholder="e.g. check the assembly against the spec">
+    <p id="intentNote" class="note">intent: - (try "check screws count", "how many screws", "explain screws count")</p>
+    <div id="explainBox"></div>
     <p class="note">Voice uses the transcriber adapter. With mock adapters this returns a canned command - it is labelled as mock, never presented as real recognition.</p>
   </section>
   <section>
@@ -86,9 +93,49 @@
   var chunks = [];
 
   function el(id) { return document.getElementById(id); }
+  var currentIntent = { action: 'full_check', item_id: null, label: null };
+
+  function noteAttempt() { el('attemptNote').textContent = 'attempt ' + attempt + ' of 3'; }
   function setPreviewFromBlob(blob) {
     el('preview').src = URL.createObjectURL(blob);
     el('preview').hidden = false;
+    // Auto attempt counting: a fresh capture after a recapture request
+    // becomes the next attempt automatically (max 3).
+    if (lastReport && lastReport.needs_recapture && attempt < 3) {
+      attempt += 1;
+      noteAttempt();
+      el('summary').textContent = 'New capture loaded as attempt ' + attempt + ' of 3 - press Run check.';
+    }
+  }
+
+  function refreshIntent() {
+    var text = el('transcript').value;
+    if (!text.trim()) { el('intentNote').textContent = 'intent: -'; return Promise.resolve(); }
+    return fetch('/api/intent', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ transcript: text, spec_yaml: el('spec').value })
+    }).then(function (r) { return r.json(); }).then(function (d) {
+      currentIntent = d;
+      el('intentNote').textContent = 'intent: ' + d.action +
+        (d.item_id ? ' (' + d.item_id + ')' : '') +
+        (d.action === 'unknown' ? ' - rephrase, or just press Run check for a full check' : '');
+      if (d.action === 'explain') showExplanation(d.item_id);
+    }).catch(function () { el('intentNote').textContent = 'intent: unavailable'; });
+  }
+
+  function showExplanation(itemId) {
+    var box = el('explainBox');
+    box.innerHTML = '';
+    if (!lastReport) {
+      box.innerHTML = '<div class="banner">Run a check first, then ask me to explain an item.</div>';
+      return;
+    }
+    var item = null;
+    lastReport.items.forEach(function (i) { if (i.item_id === itemId) item = i; });
+    if (!item) { box.innerHTML = '<div class="banner">That item is not in the last report.</div>'; return; }
+    box.innerHTML = '<div class="banner"><strong>' + item.item_id + ': ' + item.status + '</strong> - ' +
+      item.explanation + ' Measured: ' + JSON.stringify(item.measured) +
+      ' Expected: ' + JSON.stringify(item.expected) + ' (tool: ' + item.evidence.tool + ')</div>';
   }
 
   fetch('/api/config').then(function (r) { return r.json(); }).then(function (c) {
@@ -125,8 +172,24 @@
 
   function loadSample(name) {
     fetch('/api/sample/' + name).then(function (r) { return r.blob(); }).then(setPreviewFromBlob);
-    attempt = 1;
   }
+
+  fetch('/api/gallery').then(function (r) { return r.json(); }).then(function (d) {
+    var sel = el('gallery');
+    d.items.forEach(function (item) {
+      var opt = document.createElement('option');
+      opt.value = item.url;
+      opt.textContent = item.dataset + ' / ' + item.name;
+      sel.appendChild(opt);
+    });
+  }).catch(function () { el('gallery').innerHTML = '<option>gallery unavailable</option>'; });
+
+  el('loadGallery').addEventListener('click', function () {
+    if (!el('gallery').value) return;
+    fetch(el('gallery').value).then(function (r) { return r.blob(); }).then(setPreviewFromBlob);
+  });
+
+  el('transcript').addEventListener('change', refreshIntent);
   el('samplePass').addEventListener('click', function () { loadSample('pass'); });
   el('sampleMissing').addEventListener('click', function () { loadSample('missing'); });
   el('sampleBlank').addEventListener('click', function () { loadSample('blank'); });
@@ -150,6 +213,7 @@
         fetch('/api/transcribe', { method: 'POST', body: form }).then(function (r) { return r.json(); }).then(function (d) {
           el('transcript').value = d.text || '';
           el('micState').textContent = 'transcribed via ' + d.adapter + (d.mock ? ' (mock - canned text)' : '');
+          refreshIntent();
         }).catch(function (err) { el('micState').textContent = 'transcribe error: ' + err.message; });
       };
       recorder.start();
@@ -163,6 +227,7 @@
   }
 
   el('run').addEventListener('click', function () {
+    if (currentIntent.action === 'explain') { showExplanation(currentIntent.item_id); return; }
     if (el('preview').hidden && !el('file').files[0]) {
       el('summary').textContent = 'Capture or upload an image first.';
       return;
@@ -174,6 +239,9 @@
       form.append('spec_yaml', el('spec').value);
       form.append('transcript', el('transcript').value);
       form.append('attempt', String(attempt));
+      if (currentIntent.action === 'check_item' && currentIntent.item_id) {
+        form.append('only_item_id', currentIntent.item_id);
+      }
       return fetch('/api/check', { method: 'POST', body: form });
     }).then(function (r) {
       return r.json().then(function (d) { if (!r.ok) throw new Error(d.detail || 'check failed'); return d; });

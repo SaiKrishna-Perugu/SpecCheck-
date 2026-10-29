@@ -18,6 +18,7 @@ from PIL import Image
 from . import agent as agent_module
 from .adapters import build_adapters
 from .config import get_settings
+from .intent import parse_intent
 from .report import render_html
 from .samples import DEMO_SPEC_YAML, SAMPLE_BUILDERS
 from .spec import load_checklist_yaml
@@ -64,17 +65,59 @@ def api_config() -> dict[str, Any]:
     return {
         "adapter": settings.adapter,
         "meta_configured": settings.meta_configured,
-        "note": (
-            "mock adapters are active; no Meta API is called"
-            if settings.adapter == "mock"
-            else "meta adapters selected but not wired yet (see DOCS_NOTES.md TODOs)"
-        ),
+        "note": {
+            "mock": "mock adapters are active; no Meta API is called",
+            "fallback": "classical fallback segmenter (not SAM 3.1); no Meta API is called",
+            "meta": "meta adapters selected but not wired yet (see DOCS_NOTES.md TODOs)",
+        }[settings.adapter],
     }
 
 
 @app.get("/api/demo-spec")
 def demo_spec() -> dict[str, str]:
     return {"yaml": DEMO_SPEC_YAML}
+
+
+@app.post("/api/intent")
+async def intent(payload: dict[str, Any]) -> dict[str, Any]:
+    """Parse a voice/text command into a structured intent (no LLM)."""
+    try:
+        checklist = load_checklist_yaml(str(payload.get("spec_yaml") or DEMO_SPEC_YAML))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=f"invalid spec: {exc}") from exc
+    parsed = parse_intent(str(payload.get("transcript") or ""), checklist)
+    return parsed.to_dict()
+
+
+_GALLERY_DIRS = {
+    "samples": Path(__file__).resolve().parent.parent / "samples",
+    "standard": Path(__file__).resolve().parent.parent / "eval" / "images",
+    "hard": Path(__file__).resolve().parent.parent / "eval" / "hard" / "images",
+}
+
+
+@app.get("/api/gallery")
+def gallery() -> dict[str, Any]:
+    items = []
+    for dataset, folder in _GALLERY_DIRS.items():
+        if not folder.exists():
+            continue
+        for path in sorted(folder.glob("*.png")):
+            items.append(
+                {"dataset": dataset, "name": path.stem, "url": f"/api/gallery/{dataset}/{path.stem}"}
+            )
+    return {"items": items}
+
+
+@app.get("/api/gallery/{dataset}/{name}")
+def gallery_image(dataset: str, name: str) -> FileResponse:
+    folder = _GALLERY_DIRS.get(dataset)
+    if folder is None or not name.replace("-", "").replace("_", "").isalnum():
+        raise HTTPException(status_code=404, detail="unknown gallery image")
+    path = folder / f"{name}.png"
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="unknown gallery image")
+    return FileResponse(path, media_type="image/png", filename=f"{name}.png")
 
 
 @app.post("/api/transcribe")
@@ -91,6 +134,7 @@ async def check(
     spec_yaml: str = Form(...),
     transcript: str = Form(""),
     attempt: int = Form(1),
+    only_item_id: str = Form(""),
 ) -> JSONResponse:
     (segmenter, reasoner, _), _ = _adapters()
     if attempt < 1 or attempt > agent_module.MAX_ATTEMPTS:
@@ -110,6 +154,7 @@ async def check(
         reasoner,
         transcript=transcript or None,
         attempt=attempt,
+        only_item_ids={only_item_id} if only_item_id else None,
     )
     return JSONResponse(report.to_dict())
 

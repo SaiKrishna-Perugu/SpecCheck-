@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SpecCheck - visual QA for assembly</title>
+<style>
+  :root { --ink:#1c2430; --paper:#ffffff; --line:#c9d1d9; --accent:#0f6b4f; --bad:#b3271e; --warn:#9a6a00; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: "Segoe UI", system-ui, sans-serif; color:var(--ink); background:var(--paper); }
+  header { border-bottom:2px solid var(--ink); padding:14px 20px; display:flex; justify-content:space-between; align-items:baseline; }
+  header h1 { font-size:22px; margin:0; letter-spacing:.2px; }
+  header p { margin:0; font-size:13px; color:#46545f; }
+  main { display:grid; grid-template-columns: 1fr 1fr; gap:0; min-height:calc(100vh - 57px); }
+  section { padding:18px 20px; }
+  section + section { border-left:1px solid var(--line); }
+  h2 { font-size:14px; text-transform:uppercase; letter-spacing:.08em; margin:0 0 10px; }
+  video, img.preview { width:100%; background:#111; aspect-ratio:4/3; object-fit:contain; display:block; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; margin:10px 0; }
+  button { font:inherit; font-size:14px; padding:8px 14px; border:1px solid var(--ink); background:#fff; cursor:pointer; border-radius:4px; }
+  button.primary { background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600; }
+  button:disabled { opacity:.45; cursor:default; }
+  textarea, input[type=text] { width:100%; font-family:Consolas, monospace; font-size:13px; border:1px solid var(--line); border-radius:4px; padding:8px; }
+  label { font-size:13px; font-weight:600; display:block; margin:12px 0 4px; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th, td { border:1px solid var(--line); padding:6px 8px; text-align:left; vertical-align:top; }
+  td.PASS { color:var(--accent); font-weight:700; } td.FAIL { color:var(--bad); font-weight:700; } td.UNSURE { color:var(--warn); font-weight:700; }
+  .banner { border:1px solid var(--warn); background:#fff8e1; padding:10px 12px; font-size:14px; margin:10px 0; border-radius:4px; }
+  .note { font-size:12px; color:#46545f; }
+  @media (max-width: 900px) { main { grid-template-columns:1fr; } section + section { border-left:none; border-top:1px solid var(--line); } }
+</style>
+</head>
+<body>
+<header>
+  <h1>SpecCheck</h1>
+  <p id="adapterNote">loading adapter info...</p>
+</header>
+<main>
+  <section>
+    <h2>1. Capture</h2>
+    <video id="video" autoplay playsinline muted></video>
+    <canvas id="canvas" width="320" height="240" hidden></canvas>
+    <div class="row">
+      <button id="startCam" type="button">Start webcam</button>
+      <button id="snap" type="button">Use current frame</button>
+      <label style="margin:0; font-weight:400;">or upload <input id="file" type="file" accept="image/*"></label>
+    </div>
+    <div class="row">
+      <button id="samplePass" type="button">Load sample: pass</button>
+      <button id="sampleMissing" type="button">Load sample: missing screw</button>
+      <button id="sampleBlank" type="button">Load sample: blank (UNSURE)</button>
+    </div>
+    <img id="preview" class="preview" alt="Selected capture preview" hidden>
+    <h2 style="margin-top:18px;">2. Speak (or type) the command</h2>
+    <div class="row">
+      <button id="mic" type="button">Record voice command</button>
+      <span id="micState" class="note">mic idle</span>
+    </div>
+    <input id="transcript" type="text" placeholder="e.g. check the assembly against the spec">
+    <p class="note">Voice uses the transcriber adapter. With mock adapters this returns a canned command - it is labelled as mock, never presented as real recognition.</p>
+  </section>
+  <section>
+    <h2>3. Checklist / spec (YAML)</h2>
+    <textarea id="spec" rows="14" spellcheck="false"></textarea>
+    <div class="row">
+      <button id="run" class="primary" type="button">Run check</button>
+      <button id="downloadHtml" type="button" disabled>Download HTML report</button>
+      <span id="attemptNote" class="note"></span>
+    </div>
+    <div id="recapture"></div>
+    <h2 style="margin-top:18px;">4. Evidence-linked results</h2>
+    <div id="summary" class="note">No check run yet.</div>
+    <img id="annotated" class="preview" alt="Annotated result" hidden>
+    <table id="results" hidden>
+      <thead><tr><th>Item</th><th>Status</th><th>Measured</th><th>Expected</th><th>Tool</th><th>Why</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </section>
+</main>
+<script>
+(function () {
+  var attempt = 1;
+  var lastReport = null;
+  var stream = null;
+  var recorder = null;
+  var chunks = [];
+
+  function el(id) { return document.getElementById(id); }
+  function setPreviewFromBlob(blob) {
+    el('preview').src = URL.createObjectURL(blob);
+    el('preview').hidden = false;
+  }
+
+  fetch('/api/config').then(function (r) { return r.json(); }).then(function (c) {
+    el('adapterNote').textContent = 'adapter: ' + c.adapter + ' - ' + c.note;
+  }).catch(function () { el('adapterNote').textContent = 'adapter info unavailable'; });
+
+  fetch('/api/demo-spec').then(function (r) { return r.json(); }).then(function (d) {
+    el('spec').value = d.yaml;
+  });
+
+  el('startCam').addEventListener('click', function () {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      el('micState').textContent = 'webcam not available in this browser - use upload instead';
+      return;
+    }
+    navigator.mediaDevices.getUserMedia({ video: true }).then(function (s) {
+      stream = s;
+      el('video').srcObject = s;
+    }).catch(function (err) { el('micState').textContent = 'webcam error: ' + err.message; });
+  });
+
+  el('snap').addEventListener('click', function () {
+    var v = el('video');
+    if (!v.videoWidth) { el('micState').textContent = 'start the webcam first'; return; }
+    var c = el('canvas');
+    c.width = v.videoWidth; c.height = v.videoHeight;
+    c.getContext('2d').drawImage(v, 0, 0);
+    c.toBlob(function (b) { if (b) setPreviewFromBlob(b); }, 'image/png');
+  });
+
+  el('file').addEventListener('change', function () {
+    if (el('file').files[0]) setPreviewFromBlob(el('file').files[0]);
+  });
+
+  function loadSample(name) {
+    fetch('/api/sample/' + name).then(function (r) { return r.blob(); }).then(setPreviewFromBlob);
+    attempt = 1;
+  }
+  el('samplePass').addEventListener('click', function () { loadSample('pass'); });
+  el('sampleMissing').addEventListener('click', function () { loadSample('missing'); });
+  el('sampleBlank').addEventListener('click', function () { loadSample('blank'); });
+
+  el('mic').addEventListener('click', function () {
+    if (recorder && recorder.state === 'recording') { recorder.stop(); return; }
+    if (!navigator.mediaDevices || !window.MediaRecorder) {
+      el('micState').textContent = 'mic recording not available - type the command instead';
+      return;
+    }
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(function (s) {
+      chunks = [];
+      recorder = new MediaRecorder(s);
+      recorder.ondataavailable = function (e) { chunks.push(e.data); };
+      recorder.onstop = function () {
+        s.getTracks().forEach(function (t) { t.stop(); });
+        el('micState').textContent = 'transcribing...';
+        var blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
+        var form = new FormData();
+        form.append('audio', blob, 'command.webm');
+        fetch('/api/transcribe', { method: 'POST', body: form }).then(function (r) { return r.json(); }).then(function (d) {
+          el('transcript').value = d.text || '';
+          el('micState').textContent = 'transcribed via ' + d.adapter + (d.mock ? ' (mock - canned text)' : '');
+        }).catch(function (err) { el('micState').textContent = 'transcribe error: ' + err.message; });
+      };
+      recorder.start();
+      el('micState').textContent = 'recording... click again to stop';
+    }).catch(function (err) { el('micState').textContent = 'mic error: ' + err.message; });
+  });
+
+  function currentImageBlob() {
+    if (el('file').files[0]) return Promise.resolve(el('file').files[0]);
+    return fetch(el('preview').src).then(function (r) { return r.blob(); });
+  }
+
+  el('run').addEventListener('click', function () {
+    if (el('preview').hidden && !el('file').files[0]) {
+      el('summary').textContent = 'Capture or upload an image first.';
+      return;
+    }
+    el('summary').textContent = 'running checks...';
+    currentImageBlob().then(function (blob) {
+      var form = new FormData();
+      form.append('image', blob, 'capture.png');
+      form.append('spec_yaml', el('spec').value);
+      form.append('transcript', el('transcript').value);
+      form.append('attempt', String(attempt));
+      return fetch('/api/check', { method: 'POST', body: form });
+    }).then(function (r) {
+      return r.json().then(function (d) { if (!r.ok) throw new Error(d.detail || 'check failed'); return d; });
+    }).then(function (report) {
+      lastReport = report;
+      render(report);
+    }).catch(function (err) { el('summary').textContent = 'error: ' + err.message; });
+  });
+
+  function render(report) {
+    var s = report.summary;
+    el('summary').textContent = 'PASS ' + s.PASS + ' / FAIL ' + s.FAIL + ' / UNSURE ' + s.UNSURE +
+      ' (attempt ' + report.attempt + ', adapter ' + report.adapter + ')';
+    el('attemptNote').textContent = 'attempt ' + report.attempt + ' of 3';
+    if (report.annotated_image_png_base64) {
+      el('annotated').src = 'data:image/png;base64,' + report.annotated_image_png_base64;
+      el('annotated').hidden = false;
+    }
+    var tbody = el('results').querySelector('tbody');
+    tbody.innerHTML = '';
+    report.items.forEach(function (item) {
+      var tr = document.createElement('tr');
+      [item.item_id, item.status, JSON.stringify(item.measured), JSON.stringify(item.expected),
+       item.evidence.tool, item.explanation].forEach(function (text, i) {
+        var td = document.createElement('td');
+        if (i === 1) td.className = item.status;
+        td.textContent = text;
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    el('results').hidden = false;
+    el('downloadHtml').disabled = false;
+    var box = el('recapture');
+    box.innerHTML = '';
+    if (report.needs_recapture) {
+      var div = document.createElement('div');
+      div.className = 'banner';
+      div.textContent = 'Please re-capture: ' + report.recapture_reasons.join('; ') +
+        ' Then run the check again (attempt ' + (report.attempt + 1) + ' of 3).';
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = 'I re-captured - use new attempt number';
+      btn.addEventListener('click', function () { attempt = Math.min(3, attempt + 1); el('attemptNote').textContent = 'attempt ' + attempt + ' of 3'; });
+      div.appendChild(document.createElement('br'));
+      div.appendChild(btn);
+      box.appendChild(div);
+    }
+  }
+
+  el('downloadHtml').addEventListener('click', function () {
+    if (!lastReport) return;
+    fetch('/api/report/html', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(lastReport)
+    }).then(function (r) { return r.blob(); }).then(function (blob) {
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'speccheck-report.html';
+      a.click();
+    });
+  });
+})();
+</script>
+</body>
+</html>

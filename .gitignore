@@ -1,0 +1,12 @@
+.env
+.venv/
+.uv-cache/
+.uv-python/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+reports/
+generated_images/

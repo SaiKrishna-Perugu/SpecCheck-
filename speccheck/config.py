@@ -36,6 +36,6 @@ def get_settings() -> Settings:
     _load_dotenv(Path(__file__).resolve().parent.parent / ".env")
     key = os.environ.get("META_API_KEY") or None
     adapter = (os.environ.get("SPECCHECK_ADAPTER") or "mock").strip().lower()
-    if adapter not in {"mock", "meta"}:
+    if adapter not in {"mock", "fallback", "meta"}:
         adapter = "mock"
     return Settings(meta_api_key=key, adapter=adapter)

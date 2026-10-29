@@ -24,7 +24,10 @@ class Segmenter(Protocol):
     name: str
 
     def segment(
-        self, image: np.ndarray, prompts: list[str]
+        self,
+        image: np.ndarray,
+        prompts: list[str],
+        color_hints: dict[str, str] | None = None,
     ) -> SegmentationResult: ...
 
 
@@ -34,7 +37,10 @@ def segment(
     """Tool: segment target components using text prompts from the checklist."""
     if image is None or image.size == 0:
         raise ValueError("segment: image is empty")
-    result = segmenter.segment(image, checklist.prompts())
+    try:
+        result = segmenter.segment(image, checklist.prompts(), checklist.color_hints())
+    except TypeError:
+        result = segmenter.segment(image, checklist.prompts())
     mapping = checklist.prompt_to_label()
     for comp in result.components:
         comp.label = mapping.get(comp.prompt, comp.label)

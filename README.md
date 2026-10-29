@@ -51,10 +51,25 @@ Run the tests:
 uv run pytest
 ```
 
+## Voice commands
+
+Typed or transcribed commands are parsed deterministically
+([speccheck/intent.py](speccheck/intent.py)): "check the assembly" runs a
+full check, "check screws count" runs only that item, "how many screws"
+recounts, and "explain screws count" explains the last verdict with its
+evidence. Unrecognised commands return `unknown` - the UI asks you to
+rephrase instead of guessing. Re-captures advance the attempt counter
+automatically (max 3). The image gallery in the UI lists every sample and
+eval image. In production Muse Spark replaces this parser for ambiguous
+phrasing; the deterministic parser stays as the offline fallback.
+
 ## Configuration
 
 Copy `.env.example` to `.env`. `SPECCHECK_ADAPTER=mock` (default) uses the
-offline mock models. `SPECCHECK_ADAPTER=meta` selects the real Meta adapters,
+offline mock models. `SPECCHECK_ADAPTER=fallback` uses a classical
+colour-blob segmenter for real photos (spec items can carry a `color:`
+hint); it is a SAM 3.1 substitute and labels itself as such, with modest
+confidence. `SPECCHECK_ADAPTER=meta` selects the real Meta adapters,
 which currently raise `NotImplementedError` with TODOs until DOCS_NOTES.md is
 completed from the official docs. Never commit `.env` or a real
 `META_API_KEY`.

@@ -16,7 +16,11 @@ __all__ = [
 
 
 def build_adapters(mode: str) -> tuple[Segmenter, Reasoner, Transcriber]:
-    """Return (segmenter, reasoner, transcriber) for ``mock`` or ``meta`` mode."""
+    """Return (segmenter, reasoner, transcriber) for mock / fallback / meta."""
+    if mode == "fallback":
+        from .fallback import ClassicalSegmenter
+
+        return ClassicalSegmenter(), MockReasoner(), MockTranscriber()
     if mode == "meta":
         # Imported lazily: raises NotImplementedError with TODO guidance until
         # the real endpoints from DOCS_NOTES.md are wired in.

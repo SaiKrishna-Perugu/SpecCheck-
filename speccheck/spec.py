@@ -44,6 +44,7 @@ class ChecklistItem:
     label: str
     check: str
     prompt: str = ""  # text prompt for the segmenter; defaults to label
+    color: str | None = None  # optional colour hint, e.g. "red" (fallback segmenter)
     expected_count: int | None = None
     relation: str | None = None
     reference_label: str | None = None
@@ -74,6 +75,13 @@ class Checklist:
                 if p and p not in seen:
                     seen.append(p)
         return seen
+
+    def color_hints(self) -> dict[str, str]:
+        hints: dict[str, str] = {}
+        for item in self.items:
+            if item.color:
+                hints.setdefault(item.prompt, item.color)
+        return hints
 
     def prompt_to_label(self) -> dict[str, str]:
         mapping: dict[str, str] = {}
@@ -116,6 +124,7 @@ def _parse_item(raw: dict[str, Any], index: int) -> ChecklistItem:
         label=str(label),
         check=str(check),
         prompt=str(raw.get("prompt") or label),
+        color=str(raw["color"]).lower() if raw.get("color") else None,
         expected_count=(
             int(raw["expected_count"]) if raw.get("expected_count") is not None else None
         ),

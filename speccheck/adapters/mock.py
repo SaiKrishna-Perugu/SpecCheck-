@@ -76,7 +76,12 @@ class MockSegmenter:
     def __init__(self, confidence: float = 0.95) -> None:
         self.confidence = confidence
 
-    def segment(self, image: np.ndarray, prompts: list[str]) -> SegmentationResult:
+    def segment(
+        self,
+        image: np.ndarray,
+        prompts: list[str],
+        color_hints: dict[str, str] | None = None,
+    ) -> SegmentationResult:
         arr = np.asarray(image)
         if arr.ndim != 3 or arr.shape[2] < 3:
             raise ValueError("mock segmenter expects an HxWx3 RGB image")

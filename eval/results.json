@@ -1,5 +1,6 @@
 {
   "summary": {
+    "dataset": "standard",
     "adapter": "mock",
     "images": 10,
     "items_scored": 40,

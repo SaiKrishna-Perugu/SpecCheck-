@@ -70,6 +70,11 @@ completed from the official docs. Never commit `.env` or a real
   wording is not yet reinterpreted by a model.
 - Position checks compare centroids of the first target/reference instance;
   multi-instance spatial reasoning is out of scope.
+- A fully occluded part is reported FAIL (missing), not UNSURE: the checks
+  cannot distinguish "hidden" from "absent" (hard eval case h09). Partial
+  occlusion works because some mask remains.
+- Alignment is measured in image axes; rotating the whole board makes a
+  well-aligned row read as misaligned (hard eval case h10).
 - Eval (below) runs only on synthetic images drawn from the same colour
   palette the mock segmenter reads, so its scores are a pipeline sanity
   check, not real-world accuracy. Expect them to drop sharply on real
@@ -91,6 +96,14 @@ correct, UNSURE recall 1.0 (8/8 expected-UNSURE items), UNSURE precision
 1.0 (8/8 predicted-UNSURE items), 0 false PASSes. Read the limitation
 above before quoting these: the images are synthetic and palette-matched
 to the mock segmenter by construction.
+
+Hard set (`uv run python eval/run_eval.py --hard`, degraded/occluded
+variants in `eval/hard/`): 47/48 items correct (accuracy 0.9792), 11/12
+images fully correct, 0 false PASSes. The one miss is instructive: a
+fully occluded chip is labelled UNSURE (it exists but is hidden) and the
+agent says FAIL, because with the current checks a fully hidden part is
+indistinguishable from a missing one. Noise, JPEG artifacts, dark/bright
+exposure, blur, rotation, and half-occlusion all score correctly.
 
 ## Architecture
 

@@ -2,6 +2,8 @@
 
     uv run python eval/generate_eval.py
     uv run python eval/run_eval.py
+    uv run python eval/generate_hard_eval.py
+    uv run python eval/run_eval.py --hard
 
 Reports exact-match accuracy per checklist item, plus UNSURE behaviour:
 how often expected-UNSURE items are correctly called UNSURE, how often
@@ -28,9 +30,12 @@ EVAL_DIR = Path(__file__).resolve().parent
 
 
 def main() -> int:
-    expected_path = EVAL_DIR / "expected.json"
+    hard = "--hard" in sys.argv
+    dataset_dir = EVAL_DIR / "hard" if hard else EVAL_DIR
+    gen = "eval/generate_hard_eval.py" if hard else "eval/generate_eval.py"
+    expected_path = dataset_dir / "expected.json"
     if not expected_path.exists():
-        print("expected.json missing - run: uv run python eval/generate_eval.py")
+        print(f"expected.json missing - run: uv run python {gen}")
         return 1
     expected: dict[str, dict[str, str]] = json.loads(expected_path.read_text())
     spec = load_checklist_yaml(
@@ -46,7 +51,7 @@ def main() -> int:
     images_all_correct = 0
 
     for name in sorted(expected):
-        image_path = EVAL_DIR / "images" / f"{name}.png"
+        image_path = dataset_dir / "images" / f"{name}.png"
         image = np.asarray(Image.open(image_path).convert("RGB"))
         report = run_check(image, spec, segmenter, reasoner, attempt=1)
         predicted = {r.item_id: r.status.value for r in report.results}
@@ -74,6 +79,7 @@ def main() -> int:
     unsure_recall = exp_unsure_correct / exp_unsure if exp_unsure else None
     unsure_precision = pred_unsure_correct / pred_unsure if pred_unsure else None
     summary = {
+        "dataset": "hard" if hard else "standard",
         "adapter": "mock",
         "images": len(expected),
         "items_scored": total,
@@ -85,7 +91,7 @@ def main() -> int:
         "unsure_precision": round(unsure_precision, 4) if unsure_precision is not None else None,
         "false_pass_count": false_pass,
     }
-    (EVAL_DIR / "results.json").write_text(
+    (dataset_dir / "results.json").write_text(
         json.dumps({"summary": summary, "rows": rows}, indent=2) + "\n"
     )
     for row in rows:
@@ -94,7 +100,7 @@ def main() -> int:
     print()
     for key, value in summary.items():
         print(f"{key}: {value}")
-    print("wrote eval/results.json")
+    print(f"wrote {dataset_dir.name}/results.json")
     return 0
 
 

@@ -1,0 +1,74 @@
+{
+  "h01_noise": {
+    "screws_count": "PASS",
+    "led_left_of_button": "PASS",
+    "chip_present": "PASS",
+    "screws_aligned": "PASS"
+  },
+  "h02_jpeg_low": {
+    "screws_count": "PASS",
+    "led_left_of_button": "PASS",
+    "chip_present": "PASS",
+    "screws_aligned": "PASS"
+  },
+  "h03_dark": {
+    "screws_count": "PASS",
+    "led_left_of_button": "PASS",
+    "chip_present": "PASS",
+    "screws_aligned": "PASS"
+  },
+  "h04_bright": {
+    "screws_count": "PASS",
+    "led_left_of_button": "PASS",
+    "chip_present": "PASS",
+    "screws_aligned": "PASS"
+  },
+  "h05_blur": {
+    "screws_count": "PASS",
+    "led_left_of_button": "PASS",
+    "chip_present": "PASS",
+    "screws_aligned": "PASS"
+  },
+  "h06_noise_missing_screw": {
+    "screws_count": "FAIL",
+    "led_left_of_button": "PASS",
+    "chip_present": "PASS",
+    "screws_aligned": "PASS"
+  },
+  "h07_jpeg_extra_screw": {
+    "screws_count": "FAIL",
+    "led_left_of_button": "PASS",
+    "chip_present": "PASS",
+    "screws_aligned": "PASS"
+  },
+  "h08_chip_half_occluded": {
+    "screws_count": "PASS",
+    "led_left_of_button": "PASS",
+    "chip_present": "PASS",
+    "screws_aligned": "PASS"
+  },
+  "h09_chip_fully_occluded": {
+    "screws_count": "PASS",
+    "led_left_of_button": "PASS",
+    "chip_present": "UNSURE",
+    "screws_aligned": "PASS"
+  },
+  "h10_rotated_board": {
+    "screws_count": "PASS",
+    "led_left_of_button": "PASS",
+    "chip_present": "PASS",
+    "screws_aligned": "FAIL"
+  },
+  "h11_noise_and_blur": {
+    "screws_count": "PASS",
+    "led_left_of_button": "PASS",
+    "chip_present": "PASS",
+    "screws_aligned": "PASS"
+  },
+  "h12_dark_jpeg_missing_chip": {
+    "screws_count": "PASS",
+    "led_left_of_button": "PASS",
+    "chip_present": "FAIL",
+    "screws_aligned": "PASS"
+  }
+}

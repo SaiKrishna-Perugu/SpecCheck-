@@ -9,6 +9,7 @@ checks honestly report as UNSURE - it never invents parts.
 from __future__ import annotations
 
 import numpy as np
+from PIL import Image, ImageFilter
 
 from ..samples import PART_COLORS
 from ..types import ChecklistItemResult, SegmentedComponent, SegmentationResult
@@ -43,17 +44,28 @@ def _connected_components(foreground: np.ndarray) -> list[np.ndarray]:
     return components
 
 
-def _nearest_prompt(mean_rgb: np.ndarray, prompts: list[str]) -> str | None:
-    best: tuple[float, str] | None = None
+def _chromaticity(rgb: np.ndarray) -> np.ndarray:
+    """Brightness-invariant colour: rgb / sum(rgb) per pixel."""
+    total = rgb.sum(axis=-1, keepdims=True)
+    return rgb / np.maximum(total, 1e-6)
+
+
+# Max chromaticity distance for a pixel to count as a palette colour.
+_MAX_CHROMA_DIST = 0.18
+
+
+def _prompt_palette(prompts: list[str]) -> dict[str, list[tuple[str, np.ndarray]]]:
+    """prompt -> [(palette key, chromaticity)] for keys named in the prompt."""
+    out: dict[str, list[tuple[str, np.ndarray]]] = {}
     for prompt in prompts:
-        for key, rgb in PART_COLORS.items():
-            if key in prompt.lower():
-                dist = float(np.linalg.norm(mean_rgb - np.array(rgb, dtype=float)))
-                if best is None or dist < best[0]:
-                    best = (dist, prompt)
-    if best is not None and best[0] <= 90.0:
-        return best[1]
-    return None
+        entries = [
+            (key, _chromaticity(np.array(rgb, dtype=float).reshape(1, 1, 3))[0, 0])
+            for key, rgb in PART_COLORS.items()
+            if key in prompt.lower()
+        ]
+        if entries:
+            out[prompt] = entries
+    return out
 
 
 class MockSegmenter:
@@ -68,31 +80,69 @@ class MockSegmenter:
         arr = np.asarray(image)
         if arr.ndim != 3 or arr.shape[2] < 3:
             raise ValueError("mock segmenter expects an HxWx3 RGB image")
-        rgb = arr[:, :, :3].astype(int)
-        height, width = rgb.shape[:2]
-        background = tuple(int(v) for v in rgb[0, 0])
-        components: list[SegmentedComponent] = []
-        colors, counts = np.unique(
-            rgb.reshape(-1, 3), axis=0, return_counts=True
+        # 3x3 median denoise: kills speckle noise and JPEG ringing before
+        # classification, without moving part boundaries materially.
+        arr = np.asarray(
+            Image.fromarray(np.asarray(arr, dtype=np.uint8)).filter(
+                ImageFilter.MedianFilter(3)
+            )
         )
-        for color, count in zip(colors.tolist(), counts.tolist()):
-            if tuple(color) == background or int(count) < 4:
-                continue
-            color_mask = np.all(rgb == np.array(color), axis=2)
-            prompt = _nearest_prompt(np.array(color, dtype=float), prompts)
-            if prompt is None:
-                continue
-            for mask in _connected_components(color_mask):
-                if int(mask.sum()) < 4:
-                    continue
-                components.append(
-                    SegmentedComponent(
-                        label=prompt,
-                        mask=mask,
-                        confidence=self.confidence,
-                        prompt=prompt,
+        rgb = arr[:, :, :3].astype(float)
+        height, width = rgb.shape[:2]
+        background = rgb[0, 0]
+        # Foreground = clearly different from the corner/background colour.
+        foreground = np.linalg.norm(rgb - background, axis=2) > 35.0
+        palette = _prompt_palette(prompts)
+        components: list[SegmentedComponent] = []
+        if palette and foreground.any():
+            chroma = _chromaticity(rgb)
+            # Assign each foreground pixel to its nearest palette colour in
+            # chromaticity space (robust to noise, JPEG ringing, brightness).
+            keys: list[str] = []
+            owners: list[str] = []
+            targets: list[np.ndarray] = []
+            intensities: list[float] = []
+            for prompt, entries in palette.items():
+                for key, target in entries:
+                    keys.append(key)
+                    owners.append(prompt)
+                    targets.append(target)
+                    intensities.append(float(np.mean(PART_COLORS[key])))
+            target_arr = np.stack(targets)  # (K, 3)
+            intensity_arr = np.array(intensities)
+            fg_chroma = chroma[foreground]  # (N, 3)
+            fg_intensity = rgb.mean(axis=2)[foreground]
+            dists = np.linalg.norm(
+                fg_chroma[:, None, :] - target_arr[None, :, :], axis=2
+            )
+            nearest = dists.argmin(axis=1)
+            nearest_dist = dists[np.arange(len(fg_chroma)), nearest]
+            fg_ys, fg_xs = np.nonzero(foreground)
+            masks: dict[str, np.ndarray] = {
+                prompt: np.zeros((height, width), dtype=bool) for prompt in palette
+            }
+            # Chromaticity alone cannot tell grey parts from grey background
+            # noise, so also require a plausible brightness for the colour.
+            ratio = fg_intensity / np.maximum(intensity_arr[nearest], 1e-6)
+            accepted = (nearest_dist <= _MAX_CHROMA_DIST) & (ratio >= 0.4) & (ratio <= 2.5)
+            for y, x, k in zip(
+                fg_ys[accepted].tolist(),
+                fg_xs[accepted].tolist(),
+                nearest[accepted].tolist(),
+            ):
+                masks[owners[k]][y, x] = True
+            for prompt, mask in masks.items():
+                for comp_mask in _connected_components(mask):
+                    if int(comp_mask.sum()) < 8:
+                        continue
+                    components.append(
+                        SegmentedComponent(
+                            label=prompt,
+                            mask=comp_mask,
+                            confidence=self.confidence,
+                            prompt=prompt,
+                        )
                     )
-                )
         return SegmentationResult(
             image_width=width,
             image_height=height,

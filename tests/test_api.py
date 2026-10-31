@@ -74,6 +74,13 @@ def test_transcribe_mock_labels_itself():
     assert body["text"]
 
 
+def test_three_ui_serves():
+    resp = client.get("/3d")
+    assert resp.status_code == 200
+    assert "SpecCheck 3D" in resp.text
+    assert "three@0.186.1" in resp.text
+
+
 def test_intent_endpoint():
     resp = client.post(
         "/api/intent",

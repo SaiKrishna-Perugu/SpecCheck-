@@ -221,6 +221,14 @@ def sample_image(name: str) -> FileResponse:
     return FileResponse(out, media_type="image/png", filename=f"{name}.png")
 
 
+@app.get("/3d")
+def three_ui() -> FileResponse:
+    page = Path(__file__).resolve().parent.parent / "frontend" / "three.html"
+    if not page.exists():
+        raise HTTPException(status_code=404, detail="frontend/three.html not found")
+    return FileResponse(page, media_type="text/html")
+
+
 @app.get("/")
 def index() -> FileResponse:
     if not FRONTEND.exists():

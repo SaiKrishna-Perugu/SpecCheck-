@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SpecCheck 3D - assembly board view</title>
+<style>
+  :root { --ink:#e8edf2; --dim:#9fb0bf; --panel:#12181f; --line:#2a3644; --ok:#2fae5f; --bad:#e5484d; --warn:#e8a13a; --accent:#3fa7ff; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; height:100%; background:#0b0f14; color:var(--ink); font-family:"Segoe UI", system-ui, sans-serif; overflow:hidden; }
+  #app { display:grid; grid-template-columns: 1fr 330px; height:100vh; }
+  #stage { position:relative; min-width:0; }
+  #scene { position:absolute; inset:0; width:100%; height:100%; display:block; touch-action:none; }
+  #hud { position:absolute; top:14px; left:16px; pointer-events:none; }
+  #hud h1 { font-size:20px; margin:0 0 2px; letter-spacing:.3px; }
+  #hud p { margin:0; font-size:12.5px; color:var(--dim); max-width:420px; }
+  #counts { position:absolute; top:14px; right:16px; display:flex; gap:8px; }
+  .chip { background:rgba(10,14,19,.82); border:1px solid var(--line); border-radius:999px; padding:6px 12px; font-size:13px; font-weight:700; }
+  .chip.ok { color:var(--ok); } .chip.bad { color:var(--bad); } .chip.warn { color:var(--warn); }
+  #hint { position:absolute; bottom:12px; left:16px; font-size:12px; color:var(--dim); background:rgba(10,14,19,.7); padding:6px 10px; border-radius:6px; }
+  aside { background:var(--panel); border-left:1px solid var(--line); padding:16px; overflow-y:auto; }
+  aside h2 { font-size:12px; text-transform:uppercase; letter-spacing:.09em; color:var(--dim); margin:16px 0 8px; }
+  aside h2:first-child { margin-top:0; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; }
+  button { font:inherit; font-size:13.5px; padding:8px 12px; border:1px solid var(--line); background:#1a232e; color:var(--ink); border-radius:6px; cursor:pointer; }
+  button:hover { border-color:var(--accent); }
+  button.primary { background:#14532d; border-color:#1f7a43; font-weight:700; }
+  button.active { border-color:var(--accent); color:#fff; background:#173a5c; }
+  #partInfo { border:1px solid var(--line); border-radius:8px; padding:10px 12px; font-size:13.5px; min-height:74px; background:#0e141b; }
+  #partInfo .st { font-weight:800; } .st.PASS { color:var(--ok); } .st.FAIL { color:var(--bad); } .st.UNSURE { color:var(--warn); } .st.NONE { color:var(--dim); }
+  table { width:100%; border-collapse:collapse; font-size:12.5px; }
+  td, th { border-bottom:1px solid var(--line); padding:5px 6px; text-align:left; }
+  td.PASS { color:var(--ok); font-weight:700; } td.FAIL { color:var(--bad); font-weight:700; } td.UNSURE { color:var(--warn); font-weight:700; }
+  .note { font-size:12px; color:var(--dim); line-height:1.45; }
+  #err { position:absolute; inset:auto 16px 16px auto; max-width:520px; background:#3d1113; border:1px solid var(--bad); color:#ffd7d7; padding:10px 12px; border-radius:8px; font-size:13px; display:none; z-index:5; }
+  @media (max-width: 860px) {
+    #app { grid-template-columns:1fr; grid-template-rows: 58vh 1fr; height:100dvh; }
+    aside { border-left:none; border-top:1px solid var(--line); }
+    #counts { top:10px; right:10px; gap:5px; }
+    .chip { padding:4px 8px; font-size:11.5px; }
+    #hud p { display:none; }
+    #capThumb { max-width:100%; }
+  }
+  #capThumb { width:100%; border:1px solid var(--line); border-radius:6px; display:block; margin-top:8px; }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<div id="app">
+  <div id="stage">
+    <canvas id="scene"></canvas>
+    <div id="hud">
+      <h1>SpecCheck 3D</h1>
+      <p>Live board model of the demo assembly. Pick a scenario, run the real check, then click any part to see its evidence.</p>
+    </div>
+    <div id="counts">
+      <span class="chip ok" id="cPass">PASS 0</span>
+      <span class="chip bad" id="cFail">FAIL 0</span>
+      <span class="chip warn" id="cUnsure">UNSURE 0</span>
+    </div>
+    <div id="hint">Drag to orbit - scroll to zoom - click a part for its verdict</div>
+    <div id="err"></div>
+  </div>
+  <aside>
+    <p class="note" style="margin-top:0">Board view of SpecCheck. Voice commands and the mic live in the <a href="/" style="color:var(--accent)">classic UI</a>; this page is for inspecting the assembly in 3D.</p>
+    <h2>Scenario - the board below mirrors this capture</h2>
+    <div class="row" id="scenarios">
+      <button type="button" data-s="pass" class="active">Pass</button>
+      <button type="button" data-s="missing">Missing screw</button>
+      <button type="button" data-s="extra">Extra screw</button>
+      <button type="button" data-s="misaligned">Misaligned</button>
+      <button type="button" data-s="blank">Blank frame</button>
+    </div>
+    <canvas id="capThumb" width="320" height="240" role="img" aria-label="Schematic of the 2D capture the agent checks"></canvas>
+    <h2>Agent</h2>
+    <div class="row">
+      <button type="button" id="run" class="primary">Run check (real API)</button>
+      <button type="button" id="resetView">Reset view</button>
+    </div>
+    <p class="note" id="runNote">Uses the same /api/check pipeline as the main UI: segmentation, deterministic checks, evidence-linked verdicts.</p>
+    <h2>Selected part</h2>
+    <div id="partInfo">Click a screw, the LED, the button, or the chip.</div>
+    <h2>Checklist results</h2>
+    <table><thead><tr><th>Item</th><th>Status</th></tr></thead><tbody id="rows"><tr><td colspan="2">No check run yet.</td></tr></tbody></table>
+    <h2>About this view</h2>
+    <p class="note">The 3D board mirrors the 2D sample images the agent checks. Part colours come from measured verdicts only: green PASS, red FAIL, amber UNSURE. <a href="/" style="color:var(--accent)">Open the classic UI</a> for webcam, mic, and YAML editing.</p>
+  </aside>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+const errBox = document.getElementById('err');
+function showError(msg) { errBox.textContent = msg; errBox.style.display = 'block'; }
+window.addEventListener('error', (e) => showError('Error: ' + (e.message || 'unknown')));
+
+// ---------- renderer / scene ----------
+const canvas = document.getElementById('scene');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0b0f14);
+scene.fog = new THREE.Fog(0x0b0f14, 18, 34);
+
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
+const CAM_HOME = new THREE.Vector3(5.2, 6.4, 7.4);
+camera.position.copy(CAM_HOME);
+
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true;
+controls.dampingFactor = 0.06;
+controls.target.set(0, 0.3, 0);
+controls.maxPolarAngle = Math.PI * 0.49;
+controls.minDistance = 3.5;
+controls.maxDistance = 18;
+
+// ---------- lights ----------
+scene.add(new THREE.AmbientLight(0xbfd4e6, 0.35));
+const key = new THREE.DirectionalLight(0xffffff, 2.6);
+key.position.set(5, 9, 4);
+key.castShadow = true;
+key.shadow.mapSize.set(2048, 2048);
+key.shadow.camera.left = -6; key.shadow.camera.right = 6;
+key.shadow.camera.top = 6; key.shadow.camera.bottom = -6;
+scene.add(key);
+const rim = new THREE.DirectionalLight(0x6db3ff, 0.9);
+rim.position.set(-6, 4, -6);
+scene.add(rim);
+
+// ---------- helpers ----------
+function boardTexture() {
+  const c = document.createElement('canvas'); c.width = 1024; c.height = 640;
+  const g = c.getContext('2d');
+  g.fillStyle = '#14532d'; g.fillRect(0, 0, 1024, 640);
+  g.strokeStyle = 'rgba(220,255,225,0.20)'; g.lineWidth = 2;
+  for (let i = 0; i < 42; i++) {
+    g.beginPath();
+    let x = Math.random() * 1024, y = Math.random() * 640;
+    g.moveTo(x, y);
+    for (let s = 0; s < 5; s++) { if (Math.random() > 0.5) x += (Math.random() - 0.5) * 220; else y += (Math.random() - 0.5) * 160; g.lineTo(x, y); }
+    g.stroke();
+    g.fillStyle = 'rgba(240,220,150,0.85)';
+    g.beginPath(); g.arc(x, y, 5, 0, 7); g.fill();
+  }
+  for (let i = 0; i < 130; i++) {
+    g.fillStyle = 'rgba(240,220,150,0.5)';
+    g.beginPath(); g.arc(Math.random() * 1024, Math.random() * 640, 3, 0, 7); g.fill();
+  }
+  g.fillStyle = 'rgba(255,255,255,0.85)'; g.font = 'bold 34px monospace';
+  g.fillText('SPECCHECK DEMO-01', 36, 596);
+  g.font = 'bold 25px monospace';
+  g.fillText('U1', 700, 210); g.fillText('LED1', 120, 330);
+  g.fillText('SW1', 300, 360); g.fillText('J1', 880, 560);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = 8;
+  return t;
+}
+function roundedRectShape(w, h, r) {
+  const s = new THREE.Shape(), x = -w / 2, y = -h / 2;
+  s.moveTo(x + r, y); s.lineTo(x + w - r, y); s.quadraticCurveTo(x + w, y, x + w, y + r);
+  s.lineTo(x + w, y + h - r); s.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  s.lineTo(x + r, y + h); s.quadraticCurveTo(x, y + h, x, y + h - r);
+  s.lineTo(x, y + r); s.quadraticCurveTo(x, y, x + r, y);
+  return s;
+}
+const STATUS = { PASS: 0x2fae5f, FAIL: 0xe5484d, UNSURE: 0xe8a13a, NONE: 0x8b98a5 };
+
+// ---------- world ----------
+const bench = new THREE.Mesh(
+  new THREE.CircleGeometry(16, 64),
+  new THREE.MeshStandardMaterial({ color: 0x141a21, roughness: 0.95, metalness: 0 })
+);
+bench.rotation.x = -Math.PI / 2; bench.position.y = -0.42; bench.receiveShadow = true;
+scene.add(bench);
+const grid = new THREE.PolarGridHelper(9, 12, 6, 64, 0x2a3644, 0x1c2632);
+grid.position.y = -0.41;
+scene.add(grid);
+
+const boardGroup = new THREE.Group();
+scene.add(boardGroup);
+
+const board = new THREE.Mesh(
+  new THREE.ExtrudeGeometry(roundedRectShape(7.2, 4.6, 0.28), { depth: 0.16, bevelEnabled: true, bevelThickness: 0.03, bevelSize: 0.03, bevelSegments: 2 }),
+  new THREE.MeshStandardMaterial({ map: boardTexture(), roughness: 0.55, metalness: 0.05 })
+);
+board.rotation.x = -Math.PI / 2; board.position.y = 0.1;
+board.castShadow = board.receiveShadow = true;
+boardGroup.add(board);
+
+// image coords (320x240) -> board coords
+function toBoard(ix, iy) { return { x: (ix / 320 - 0.5) * 6.6, z: (iy / 240 - 0.5) * 4.0 }; }
+
+const steel = new THREE.MeshStandardMaterial({ color: 0xd7dde3, roughness: 0.28, metalness: 1.0 });
+const darkSteel = new THREE.MeshStandardMaterial({ color: 0x3c4652, roughness: 0.45, metalness: 0.9 });
+
+function makeScrew() {
+  const grp = new THREE.Group();
+  const pts = [];
+  pts.push(new THREE.Vector2(0.0, 0.0));
+  pts.push(new THREE.Vector2(0.16, 0.0));
+  pts.push(new THREE.Vector2(0.17, 0.05));
+  pts.push(new THREE.Vector2(0.13, 0.11));
+  pts.push(new THREE.Vector2(0.05, 0.14));
+  pts.push(new THREE.Vector2(0.0, 0.14));
+  const head = new THREE.Mesh(new THREE.LatheGeometry(pts, 40), steel);
+  head.castShadow = true;
+  grp.add(head);
+  const slot = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.02, 0.045), darkSteel);
+  slot.position.y = 0.145; grp.add(slot);
+  const slot2 = slot.clone(); slot2.rotation.y = Math.PI / 2; grp.add(slot2);
+  return grp;
+}
+function makeLED() {
+  const grp = new THREE.Group();
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.18, 0.1, 28),
+    new THREE.MeshStandardMaterial({ color: 0x5a1114, roughness: 0.5 }));
+  base.position.y = 0.05; grp.add(base);
+  const dome = new THREE.Mesh(new THREE.SphereGeometry(0.15, 28, 20, 0, Math.PI * 2, 0, Math.PI / 2),
+    new THREE.MeshStandardMaterial({ color: 0xff4b41, roughness: 0.25, emissive: 0xff2d22, emissiveIntensity: 0.55 }));
+  dome.position.y = 0.1; dome.castShadow = true; grp.add(dome);
+  return grp;
+}
+function makeButton() {
+  const grp = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.21, 0.23, 0.16, 32),
+    new THREE.MeshStandardMaterial({ color: 0x232a33, roughness: 0.6 }));
+  body.position.y = 0.08; body.castShadow = true; grp.add(body);
+  const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.08, 32),
+    new THREE.MeshStandardMaterial({ color: 0x35c26a, roughness: 0.35 }));
+  cap.position.y = 0.19; cap.castShadow = true; grp.add(cap);
+  return grp;
+}
+function chipTopTexture() {
+  const c = document.createElement('canvas'); c.width = 256; c.height = 192;
+  const g = c.getContext('2d');
+  g.fillStyle = '#171c22'; g.fillRect(0, 0, 256, 192);
+  g.fillStyle = 'rgba(235,240,245,0.92)'; g.font = 'bold 34px monospace';
+  g.fillText('SPEC-01', 42, 84);
+  g.font = '22px monospace'; g.fillStyle = 'rgba(235,240,245,0.6)';
+  g.fillText('QA DEMO', 42, 122);
+  g.beginPath(); g.arc(28, 28, 9, 0, 7); g.fillStyle = 'rgba(235,240,245,0.9)'; g.fill();
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+function makeChip() {
+  const grp = new THREE.Group();
+  const body = new THREE.Mesh(
+    new THREE.ExtrudeGeometry(roundedRectShape(1.15, 0.85, 0.08), { depth: 0.16, bevelEnabled: true, bevelThickness: 0.02, bevelSize: 0.02, bevelSegments: 2 }),
+    new THREE.MeshStandardMaterial({ color: 0x171c22, roughness: 0.42, metalness: 0.15 }));
+  body.rotation.x = -Math.PI / 2; body.position.y = 0.22; body.castShadow = true; grp.add(body);
+  const top = new THREE.Mesh(new THREE.PlaneGeometry(1.05, 0.75),
+    new THREE.MeshStandardMaterial({ map: chipTopTexture(), roughness: 0.5 }));
+  top.rotation.x = -Math.PI / 2; top.position.y = 0.405; grp.add(top);
+  const pinGeo = new THREE.BoxGeometry(0.055, 0.04, 0.13);
+  const pins = new THREE.InstancedMesh(pinGeo, steel, 12);
+  const m = new THREE.Matrix4();
+  for (let i = 0; i < 6; i++) {
+    m.setPosition(-0.48 + i * 0.19, 0.06, 0.44); pins.setMatrixAt(i, m);
+    m.setPosition(-0.48 + i * 0.19, 0.06, -0.44); pins.setMatrixAt(i + 6, m);
+  }
+  pins.castShadow = true; grp.add(pins);
+  return grp;
+}
+
+// parts: key -> { group, itemId, label, home }
+const parts = {};
+function addPart(name, mesh, ix, iy, itemId, label) {
+  const p = toBoard(ix, iy);
+  mesh.position.set(p.x, 0.28, p.z);
+  boardGroup.add(mesh);
+  parts[name] = { group: mesh, itemId, label, home: mesh.position.clone(), halo: null };
+  mesh.traverse((o) => { o.userData.part = name; });
+}
+addPart('screw1', makeScrew(), 29, 29, 'screws_count', 'Screw 1');
+addPart('screw2', makeScrew(), 79, 29, 'screws_count', 'Screw 2');
+addPart('screw3', makeScrew(), 129, 29, 'screws_count', 'Screw 3');
+addPart('screw4', makeScrew(), 179, 29, 'screws_count', 'Screw 4');
+addPart('led', makeLED(), 41, 111, 'led_left_of_button', 'LED');
+addPart('button', makeButton(), 103, 113, 'led_left_of_button', 'Button');
+addPart('chip', makeChip(), 210, 112, 'chip_present', 'Chip');
+addPart('screw5', makeScrew(), 229, 29, 'screws_count', 'Screw 5 (extra)');
+parts.screw5.group.visible = false;
+
+// ghost showing where screw 4 belongs (misaligned scenario)
+const ghost = makeScrew();
+ghost.traverse((o) => {
+  if (o.isMesh) { o.material = new THREE.MeshBasicMaterial({ color: 0xe8a13a, transparent: true, opacity: 0.3, wireframe: true }); }
+});
+ghost.visible = false;
+boardGroup.add(ghost);
+
+// selection / hover ring on the board itself
+const pickRing = new THREE.Mesh(
+  new THREE.RingGeometry(0.3, 0.4, 44),
+  new THREE.MeshBasicMaterial({ color: 0x3fa7ff, transparent: true, opacity: 0.95, side: THREE.DoubleSide })
+);
+pickRing.rotation.x = -Math.PI / 2;
+pickRing.position.y = 0.3;
+pickRing.visible = false;
+scene.add(pickRing);
+function placePickRing(name) {
+  if (!name || !parts[name].group.visible) { pickRing.visible = false; return; }
+  const p = parts[name].group.position;
+  pickRing.position.set(p.x, 0.31, p.z);
+  pickRing.visible = true;
+}
+
+// verdict rings under parts
+function setRing(part, status) {
+  if (part.halo) { part.group.remove(part.halo); part.halo.geometry.dispose(); part.halo = null; }
+  if (!status) return;
+  const ring = new THREE.Mesh(
+    new THREE.RingGeometry(0.26, 0.34, 40),
+    new THREE.MeshBasicMaterial({ color: STATUS[status], transparent: true, opacity: 0.9, side: THREE.DoubleSide })
+  );
+  ring.rotation.x = -Math.PI / 2; ring.position.y = 0.02;
+  part.group.add(ring); part.halo = ring;
+}
+
+function drawCaptureThumb(name) {
+  const cv = document.getElementById('capThumb');
+  const g = cv.getContext('2d');
+  g.fillStyle = '#18181c'; g.fillRect(0, 0, 320, 240);
+  if (name === 'blank') return;
+  const rect = (x, y, w, h, col) => { g.fillStyle = col; g.fillRect(x, y, w, h); };
+  const screws = [[20, 20], [70, 20], [120, 20], [170, 20]];
+  if (name === 'extra') screws.push([220, 20]);
+  screws.forEach(([x, y], i) => {
+    if (name === 'missing' && i === 3) return;
+    const yy = name === 'misaligned' && i === 3 ? y + 60 : y;
+    rect(x, yy, 18, 18, '#c8c8cd');
+  });
+  rect(30, 100, 22, 22, '#e63c32');
+  rect(90, 100, 26, 26, '#3cc85a');
+  rect(180, 90, 60, 44, '#466ee6');
+}
+
+// ---------- scenarios ----------
+let scenario = 'pass';
+let lastReport = null;
+function applyScenario(name) {
+  scenario = name;
+  document.querySelectorAll('#scenarios button').forEach((b) => b.classList.toggle('active', b.dataset.s === name));
+  for (const k of ['screw1', 'screw2', 'screw3', 'screw4', 'led', 'button', 'chip']) {
+    parts[k].group.visible = true;
+    parts[k].group.position.copy(parts[k].home);
+  }
+  parts.screw5.group.visible = name === 'extra';
+  if (name === 'missing') parts.screw4.group.visible = false;
+  ghost.position.copy(parts.screw4.home);
+  ghost.visible = name === 'misaligned';
+  if (name === 'misaligned') parts.screw4.group.position.z += 0.85;
+  if (name === 'blank') for (const k in parts) parts[k].group.visible = false;
+  drawCaptureThumb(name);
+  placePickRing(selected);
+  paintFromReport();
+}
+document.querySelectorAll('#scenarios button').forEach((b) =>
+  b.addEventListener('click', () => applyScenario(b.dataset.s)));
+
+// ---------- picking ----------
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+let selected = null;
+function pick(ev) {
+  const r = canvas.getBoundingClientRect();
+  pointer.x = ((ev.clientX - r.left) / r.width) * 2 - 1;
+  pointer.y = -((ev.clientY - r.top) / r.height) * 2 + 1;
+  raycaster.setFromCamera(pointer, camera);
+  const hits = raycaster.intersectObjects(boardGroup.children, true);
+  for (const h of hits) {
+    const name = h.object.userData.part;
+    if (name && parts[name].group.visible) { selectPart(name); return; }
+  }
+}
+canvas.addEventListener('pointerdown', (e) => { canvas.dataset.down = e.clientX + ',' + e.clientY; });
+canvas.addEventListener('pointerup', (e) => {
+  const d = (canvas.dataset.down || '0,0').split(',');
+  if (Math.hypot(e.clientX - +d[0], e.clientY - +d[1]) < 6) pick(e);
+});
+function selectPart(name) {
+  selected = name;
+  placePickRing(name);
+  showPartInfo();
+}
+let hoverTick = 0;
+canvas.addEventListener('pointermove', (e) => {
+  if (++hoverTick % 3) return;
+  const r = canvas.getBoundingClientRect();
+  pointer.x = ((e.clientX - r.left) / r.width) * 2 - 1;
+  pointer.y = -((e.clientY - r.top) / r.height) * 2 + 1;
+  raycaster.setFromCamera(pointer, camera);
+  const hits = raycaster.intersectObjects(boardGroup.children, true);
+  let found = null;
+  for (const h of hits) { if (h.object.userData.part && parts[h.object.userData.part].group.visible) { found = h.object.userData.part; break; } }
+  canvas.style.cursor = found ? 'pointer' : 'grab';
+  if (!selected) placePickRing(found);
+});
+function statusOf(itemId) {
+  if (!lastReport) return null;
+  const item = lastReport.items.find((i) => i.item_id === itemId);
+  return item || null;
+}
+function showPartInfo() {
+  const box = document.getElementById('partInfo');
+  if (!selected) { box.textContent = 'Click a screw, the LED, the button, or the chip.'; return; }
+  const part = parts[selected];
+  const item = statusOf(part.itemId);
+  if (!item) {
+    box.innerHTML = '<strong>' + part.label + '</strong><br><span class="st NONE">No verdict yet</span> - run the check to get evidence for <code>' + part.itemId + '</code>.';
+    return;
+  }
+  box.innerHTML = '<strong>' + part.label + '</strong> (' + item.item_id + ')<br>' +
+    '<span class="st ' + item.status + '">' + item.status + '</span> - ' + item.explanation + '<br>' +
+    '<span class="note">Measured ' + JSON.stringify(item.measured) + ' - expected ' + JSON.stringify(item.expected) + ' - tool: ' + item.evidence.tool + '</span>';
+}
+function paintFromReport() {
+  const rows = document.getElementById('rows');
+  if (!lastReport) {
+    document.getElementById('cPass').textContent = 'PASS 0';
+    document.getElementById('cFail').textContent = 'FAIL 0';
+    document.getElementById('cUnsure').textContent = 'UNSURE 0';
+    rows.innerHTML = '<tr><td colspan="2">No check run yet.</td></tr>';
+    for (const k in parts) setRing(parts[k], null);
+    return;
+  }
+  const s = lastReport.summary;
+  document.getElementById('cPass').textContent = 'PASS ' + s.PASS;
+  document.getElementById('cFail').textContent = 'FAIL ' + s.FAIL;
+  document.getElementById('cUnsure').textContent = 'UNSURE ' + s.UNSURE;
+  rows.innerHTML = '';
+  for (const item of lastReport.items) {
+    const tr = document.createElement('tr');
+    const a = document.createElement('td'); a.textContent = item.item_id;
+    const b = document.createElement('td'); b.textContent = item.status; b.className = item.status;
+    tr.appendChild(a); tr.appendChild(b); rows.appendChild(tr);
+  }
+  for (const k in parts) {
+    const item = statusOf(parts[k].itemId);
+    setRing(parts[k], item ? item.status : null);
+  }
+  showPartInfo();
+}
+
+// ---------- run real check ----------
+async function loadSpec() {
+  const r = await fetch('/api/demo-spec');
+  return (await r.json()).yaml;
+}
+document.getElementById('run').addEventListener('click', async () => {
+  const note = document.getElementById('runNote');
+  note.textContent = 'Running the real pipeline on the ' + scenario + ' capture...';
+  try {
+    const img = await (await fetch('/api/gallery/samples/' + scenario)).blob();
+    const spec = await loadSpec();
+    const form = new FormData();
+    form.append('image', img, scenario + '.png');
+    form.append('spec_yaml', spec);
+    form.append('transcript', 'check the assembly against the spec');
+    form.append('attempt', '1');
+    const r = await fetch('/api/check', { method: 'POST', body: form });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.detail || 'check failed');
+    lastReport = data;
+    paintFromReport();
+    note.textContent = 'Verdicts from adapter "' + data.adapter + '" on the ' + scenario + ' capture. Click a part for its evidence.';
+  } catch (err) {
+    console.warn('run check failed', err);
+    note.textContent = 'The checking service is not reachable from this page. Start the SpecCheck server (or open this page through it), then press Run check again.';
+  }
+});
+document.getElementById('resetView').addEventListener('click', () => {
+  userMovedCamera = false;
+  controls.target.set(0, 0.3, 0);
+  resize();
+});
+
+// ---------- loop / resize ----------
+let userMovedCamera = false;
+controls.addEventListener('start', () => { userMovedCamera = true; });
+function resize() {
+  const w = canvas.clientWidth || canvas.parentElement.clientWidth;
+  const h = canvas.clientHeight || canvas.parentElement.clientHeight;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  // Fit the whole board on narrow (portrait) screens until the user orbits.
+  if (!userMovedCamera) {
+    const fit = camera.aspect < 0.9 ? 1.85 : camera.aspect < 1.3 ? 1.3 : 1.0;
+    camera.position.copy(CAM_HOME).multiplyScalar(fit);
+  }
+}
+window.addEventListener('resize', resize);
+resize();
+
+const clock = new THREE.Clock();
+const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function animate() {
+  requestAnimationFrame(animate);
+  const t = clock.getElapsedTime();
+  if (!reduced) boardGroup.position.y = Math.sin(t * 0.8) * 0.03;
+  controls.update();
+  renderer.render(scene, camera);
+}
+applyScenario('pass');
+animate();
+</script>
+</body>
+</html>

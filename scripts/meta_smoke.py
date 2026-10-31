@@ -34,15 +34,36 @@ def main() -> int:
     seg = segment(image, spec, segmenter)
     for comp in seg.components:
         print(f"  {comp.label}: area={comp.area_px}px conf={comp.confidence} bbox={comp.bbox}")
+    if settings.adapter == "meta" and not seg.components:
+        # Verified live: SAM matches concrete concepts, not bare part names
+        # on flat clip-art ("screw" -> zero matches; "gray square" -> all 4).
+        print("  (spec prompts matched nothing on this synthetic image; trying 'gray square')")
+        demo = segmenter.segment(image, ["gray square"])
+        for comp in demo.components:
+            print(f"  gray square: area={comp.area_px}px conf={comp.confidence:.3f} bbox={comp.bbox}")
 
     print(f"\n[reasoner: {reasoner.name}] Muse Spark role - plain-language explanation")
     results = compare_to_spec(spec, seg)
     print(" ", reasoner.explain(results, "check the assembly against the spec"))
 
     print(f"\n[transcriber: {transcriber.name}] Muse Voice Transcribe role")
-    transcript = transcriber.transcribe(b"smoke-test-audio-bytes")
+    transcript = transcriber.transcribe(_silence_wav(), filename="silence.wav")
     print(f"  text={transcript.text!r} adapter={transcript.adapter}")
     return 0
+
+
+def _silence_wav() -> bytes:
+    """One second of valid WAV silence (the real API rejects non-WAV)."""
+    import io
+    import wave
+
+    buf = io.BytesIO()
+    with wave.open(buf, "wb") as wav:
+        wav.setnchannels(1)
+        wav.setsampwidth(2)
+        wav.setframerate(16000)
+        wav.writeframes(b"\x00\x00" * 16000)
+    return buf.getvalue()
 
 
 if __name__ == "__main__":

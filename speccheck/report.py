@@ -34,6 +34,7 @@ class Report:
     image_height: int
     annotated_png: bytes | None = None
     transcript: str | None = None
+    narrative: str | None = None
     adapter: str = "mock"
     attempt: int = 1
     needs_recapture: bool = False
@@ -57,6 +58,7 @@ class Report:
             "image_width": self.image_width,
             "image_height": self.image_height,
             "transcript": self.transcript,
+            "narrative": self.narrative,
             "summary": self.summary(),
             "needs_recapture": self.needs_recapture,
             "recapture_reasons": list(self.recapture_reasons),
@@ -104,6 +106,7 @@ def build_report(
     results: list[ChecklistItemResult],
     image: np.ndarray | None = None,
     transcript: str | None = None,
+    narrative: str | None = None,
     adapter: str = "mock",
     attempt: int = 1,
     needs_recapture: bool = False,
@@ -120,6 +123,7 @@ def build_report(
         image_height=height,
         annotated_png=annotated,
         transcript=transcript,
+        narrative=narrative,
         adapter=adapter,
         attempt=attempt,
         needs_recapture=needs_recapture,
@@ -153,6 +157,8 @@ def render_html(report: Report) -> str:
         if report.transcript
         else ""
     )
+    if report.narrative:
+        transcript += f"<p>{html.escape(report.narrative)}</p>"
     recapture = ""
     if report.needs_recapture and report.recapture_reasons:
         items = "".join(f"<li>{html.escape(x)}</li>" for x in report.recapture_reasons)

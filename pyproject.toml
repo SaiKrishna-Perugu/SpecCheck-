@@ -22,6 +22,9 @@ dev = [
     "pytest>=8.0",
     "httpx>=0.27",
 ]
+meta = [
+    "meta-sam-parser>=0.0.6",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["speccheck"]

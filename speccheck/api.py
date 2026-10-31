@@ -68,7 +68,7 @@ def api_config() -> dict[str, Any]:
         "note": {
             "mock": "mock adapters are active; no Meta API is called",
             "fallback": "classical fallback segmenter (not SAM 3.1); no Meta API is called",
-            "meta": "meta adapters selected but not wired yet (see DOCS_NOTES.md TODOs)",
+            "meta": "real Meta Model API adapters active (sam-3.1, muse-spark-1.3, muse-voice-transcribe-1.0)",
         }[settings.adapter],
     }
 

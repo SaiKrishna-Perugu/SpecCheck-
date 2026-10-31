@@ -254,7 +254,8 @@
   function render(report) {
     var s = report.summary;
     el('summary').textContent = 'PASS ' + s.PASS + ' / FAIL ' + s.FAIL + ' / UNSURE ' + s.UNSURE +
-      ' (attempt ' + report.attempt + ', adapter ' + report.adapter + ')';
+      ' (attempt ' + report.attempt + ', adapter ' + report.adapter + ')' +
+      (report.narrative ? ' - ' + report.narrative : '');
     el('attemptNote').textContent = 'attempt ' + report.attempt + ' of 3';
     if (report.annotated_image_png_base64) {
       el('annotated').src = 'data:image/png;base64,' + report.annotated_image_png_base64;

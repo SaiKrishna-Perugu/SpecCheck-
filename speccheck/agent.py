@@ -38,6 +38,7 @@ def run_check(
 ) -> Report:
     """Run one capture through segment -> measure -> compare -> report."""
     seg = segment(image, checklist, segmenter)
+    narrative: str | None = None
     effective = checklist
     if only_item_ids:
         from dataclasses import replace as _replace
@@ -47,16 +48,17 @@ def run_check(
             items=tuple(i for i in checklist.items if i.id in only_item_ids),
         )
     results = compare_to_spec(effective, seg)
-    explanation = reasoner.explain(results, transcript)
-    for result in results:
-        if not result.explanation:
-            result.explanation = explanation
+    try:
+        narrative = reasoner.explain(results, transcript)
+    except Exception as exc:  # explainer must never lose the verdicts
+        narrative = f"(explanation unavailable: {exc})"
     recapture = request_recapture(results, attempt=attempt, max_attempts=max_attempts)
     return build_report(
         spec_name=checklist.name,
         results=results,
         image=image,
         transcript=transcript,
+        narrative=narrative,
         adapter=getattr(segmenter, "name", "unknown"),
         attempt=attempt,
         needs_recapture=recapture is not None,

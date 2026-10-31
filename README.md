@@ -69,10 +69,13 @@ Copy `.env.example` to `.env`. `SPECCHECK_ADAPTER=mock` (default) uses the
 offline mock models. `SPECCHECK_ADAPTER=fallback` uses a classical
 colour-blob segmenter for real photos (spec items can carry a `color:`
 hint); it is a SAM 3.1 substitute and labels itself as such, with modest
-confidence. `SPECCHECK_ADAPTER=meta` selects the real Meta adapters,
-which currently raise `NotImplementedError` with TODOs until DOCS_NOTES.md is
-completed from the official docs. Never commit `.env` or a real
-`META_API_KEY`.
+confidence. `SPECCHECK_ADAPTER=meta` uses the real Meta Model API
+(`sam-3.1`, `muse-spark-1.3`, `muse-voice-transcribe-1.0`; see
+DOCS_NOTES.md). Verified live: SAM decoded real masks (confidence ~0.93),
+Spark explained check facts, Voice Transcribe answered a WAV upload.
+Prompt wording matters: SAM matched "gray square" on the synthetic board
+but not the bare word "screw", so checklist `prompt:` fields should name
+concrete visible concepts. Never commit `.env` or a real `META_API_KEY`.
 
 ## Limitations (honest)
 

@@ -98,6 +98,12 @@ concrete visible concepts. Never commit `.env` or a real `META_API_KEY`.
   check, not real-world accuracy. Expect them to drop sharply on real
   photos until the SAM 3.1 adapter lands.
 
+## Demo video
+
+Animated walkthrough (3D orbit, scenarios, live check, classic UI):
+[docs/speccheck-demo.mp4](docs/speccheck-demo.mp4) (54s, recorded from
+the running app).
+
 ## Eval
 
 10 synthetic images with labelled per-item outcomes live in

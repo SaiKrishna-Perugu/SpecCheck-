@@ -101,7 +101,7 @@ concrete visible concepts. Never commit `.env` or a real `META_API_KEY`.
 ## Demo video
 
 Animated walkthrough (3D orbit, scenarios, live check, classic UI):
-[docs/speccheck-demo.mp4](docs/speccheck-demo.mp4) (54s, recorded from
+[docs/speccheck-demo.mp4](docs/speccheck-demo.mp4) (56s, recorded from
 the running app).
 
 ## Eval
@@ -129,19 +129,25 @@ agent says FAIL, because with the current checks a fully hidden part is
 indistinguishable from a missing one. Noise, JPEG artifacts, dark/bright
 exposure, blur, rotation, and half-occlusion all score correctly.
 
-Real-style set (`eval/realstyle/`, screenshots of the 3D board renderer:
-perspective, shading, shadows - closer to photos than clip-art), 16 items:
+Photo-style set (`eval/realstyle/`, 30 labelled screenshots of the 3D
+board renderer across scenarios and camera angles: perspective, shading,
+shadows - harder than clip-art, still not phone photos), 120 items:
 
 | Adapter | Accuracy | False PASS |
 |---|---|---|
-| mock (palette) | 0.1875 | 0 |
-| fallback (classical) | 0.25 | 0 |
-| SAM 3.1 (`--adapter=meta`) | 0.375 | 0 |
+| mock (palette) | 0.1917 | 0 |
+| fallback (classical) | 0.0667 | 0 |
+| SAM 3.1 (`--adapter=meta`) | 0.3417 | 0 |
 
 SAM is best but far from good on renders: it finds the chip reliably and
-misses small screws and the LED/button relation. Per-adapter detail is in
-`eval/realstyle/results-*.json`. No labelled phone photos exist yet;
-collecting 30+ real assembly photos is the top remaining work.
+misses small screws and the LED/button relation. The fallback collapses
+to UNSURE on rendered lighting. Per-adapter detail is in
+`eval/realstyle/results-*.json`. Zero false PASSes at every level is the
+property we keep; accuracy on real phone photos is the top remaining
+work, and this set is the bridge measurement until those photos exist.
+
+Hosting for judges (one-command local run, tunnel options, and why the
+public demo must run mock mode): [docs/hosting.md](docs/hosting.md).
 
 Baseline comparison on the standard set: Muse Spark alone judging the
 photos (`scripts/baseline_vlm.py`) scored 0.75 accuracy with **2 false

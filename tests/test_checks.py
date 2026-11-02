@@ -63,6 +63,28 @@ def test_alignment_misaligned_fails():
     assert result.measured["spread_px"] > 12
 
 
+def test_alignment_line_fit_tolerates_rotation_but_not_stray():
+    diagonal = samples.draw_parts(
+        [
+            ("screw", 20, 20, 18, 18),
+            ("screw", 70, 45, 18, 18),
+            ("screw", 120, 70, 18, 18),
+            ("screw", 170, 95, 18, 18),
+        ]
+    )
+    seg = _seg(diagonal)
+    line_item = ChecklistItem(
+        id="diag", label="screw", check="alignment", axis="line", max_spread_px=12
+    )
+    assert run_check(line_item, seg).status == CheckStatus.PASS
+    row_item = ChecklistItem(
+        id="row", label="screw", check="alignment", axis="y", max_spread_px=12
+    )
+    assert run_check(row_item, seg).status == CheckStatus.FAIL
+    stray = run_check(line_item, _seg(samples.sample_misaligned()))
+    assert stray.status == CheckStatus.FAIL
+
+
 def test_area_ratio_bounds():
     item = ChecklistItem(
         id="chip_area", label="chip", check="area_ratio",

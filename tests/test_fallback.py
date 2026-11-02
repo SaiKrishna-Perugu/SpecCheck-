@@ -40,9 +40,13 @@ def test_fallback_finds_parts_by_color_hint():
 
 
 def test_fallback_without_hints_stays_honest():
-    spec = load_checklist_yaml(samples.DEMO_SPEC_YAML)  # no color hints
+    neutral = (
+        "name: neutral\nitems:\n"
+        "  - id: a\n    label: knob\n    prompt: knob\n    check: presence\n"
+        "  - id: b\n    label: block\n    prompt: block\n    check: presence\n"
+    )
+    spec = load_checklist_yaml(neutral)  # no colour hints or colour words
     seg = segment(_photo(), spec, ClassicalSegmenter())
-    # Prompts (screw/led/button/chip) name no matching colours here.
     assert seg.components == []
 
 

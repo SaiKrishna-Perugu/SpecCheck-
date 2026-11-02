@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from typing import Any
 
+import numpy as np
+
 from .spec import ChecklistItem
 from .types import (
     ChecklistItemResult,
@@ -210,6 +212,36 @@ def check_alignment(item: ChecklistItem, seg: SegmentationResult) -> ChecklistIt
         return _result(item, CheckStatus.UNSURE, {"spread_px": None, "count": len(comps)},
                        expected, ev,
                        "Alignment needs at least two visible parts.", reason)
+    if item.axis == "line":
+        # Board-relative: fit the dominant line through centroids (PCA) and
+        # measure the worst perpendicular deviation, so a rotated but tidy
+        # row still passes while one stray part fails.
+        pts = np.array([c.centroid for c in comps if c.centroid], dtype=float)
+        if len(pts) < 2:
+            spread = None
+        else:
+            centered = pts - pts.mean(axis=0)
+            _, _, vt = np.linalg.svd(centered, full_matrices=False)
+            normal = vt[1]
+            deviations = np.abs(centered @ normal)
+            spread = float(deviations.max())
+        measured = {
+            "spread_px": round(spread, 2) if spread is not None else None,
+            "count": len(comps),
+            "fit": "line",
+        }
+        if spread is None:
+            return _result(item, CheckStatus.UNSURE, measured, expected, ev,
+                           "Centroids unavailable.", "masks have no area")
+        ok = spread <= max_spread
+        status = CheckStatus.PASS if ok else CheckStatus.FAIL
+        text = (
+            f"'{item.label}' parts sit on one line (worst deviation {spread:.1f}px)."
+            if ok
+            else f"'{item.label}' parts are off their line: worst deviation "
+            f"{spread:.1f}px exceeds {max_spread:.1f}px."
+        )
+        return _result(item, status, measured, expected, ev, text, None)
     idx = 1 if item.axis == "y" else 0
     coords = [c.centroid[idx] for c in comps if c.centroid]
     spread = float(max(coords) - min(coords)) if coords else None

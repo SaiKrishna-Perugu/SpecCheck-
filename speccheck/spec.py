@@ -35,7 +35,7 @@ import yaml
 
 CHECK_TYPES = {"count", "presence", "position", "area_ratio", "alignment"}
 RELATIONS = {"left_of", "right_of", "above", "below"}
-AXES = {"x", "y"}
+AXES = {"x", "y", "line"}
 
 
 @dataclass(frozen=True)

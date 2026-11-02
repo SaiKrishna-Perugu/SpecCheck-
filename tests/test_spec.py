@@ -13,7 +13,8 @@ def test_demo_spec_parses():
         "chip_present",
         "screws_aligned",
     ]
-    assert set(spec.prompts()) == {"screw", "led", "button", "chip"}
+    assert set(spec.prompts()) == {"metal screw", "red LED", "green button", "black chip"}
+    assert spec.prompt_to_label()["metal screw"] == "screw"
 
 
 def test_prompt_defaults_to_label():

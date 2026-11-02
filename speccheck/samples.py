@@ -119,18 +119,23 @@ name: demo-board
 items:
   - id: screws_count
     label: screw
+    prompt: "metal screw"
     check: count
     expected_count: 4
   - id: led_left_of_button
     label: led
+    prompt: "red LED"
     check: position
     relation: left_of
     reference_label: button
+    reference_prompt: "green button"
   - id: chip_present
     label: chip
+    prompt: "black chip"
     check: presence
   - id: screws_aligned
     label: screw
+    prompt: "metal screw"
     check: alignment
     axis: y
     max_spread_px: 12

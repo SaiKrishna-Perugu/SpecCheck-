@@ -29,10 +29,30 @@ from speccheck.spec import load_checklist_yaml  # noqa: E402
 EVAL_DIR = Path(__file__).resolve().parent
 
 
+def _segmenter(name: str):
+    if name == "fallback":
+        from speccheck.adapters.fallback import ClassicalSegmenter
+
+        return ClassicalSegmenter()
+    if name == "meta":
+        from speccheck.config import get_settings
+
+        get_settings()
+        from speccheck.adapters.meta import MetaSamSegmenter
+
+        return MetaSamSegmenter()
+    return MockSegmenter()
+
+
 def main() -> int:
     hard = "--hard" in sys.argv
-    dataset_dir = EVAL_DIR / "hard" if hard else EVAL_DIR
-    gen = "eval/generate_hard_eval.py" if hard else "eval/generate_eval.py"
+    real = "--real" in sys.argv
+    adapter = "mock"
+    for arg in sys.argv:
+        if arg.startswith("--adapter="):
+            adapter = arg.split("=", 1)[1]
+    dataset_dir = EVAL_DIR / "hard" if hard else (EVAL_DIR / "realstyle" if real else EVAL_DIR)
+    gen = "eval/generate_hard_eval.py" if hard else ("eval/generate_realstyle_eval.py" if real else "eval/generate_eval.py")
     expected_path = dataset_dir / "expected.json"
     if not expected_path.exists():
         print(f"expected.json missing - run: uv run python {gen}")
@@ -41,7 +61,7 @@ def main() -> int:
     spec = load_checklist_yaml(
         (Path(__file__).resolve().parent.parent / "samples" / "demo_spec.yaml").read_text()
     )
-    segmenter, reasoner = MockSegmenter(), MockReasoner()
+    segmenter, reasoner = _segmenter(adapter), MockReasoner()
 
     rows = []
     total = correct = 0
@@ -79,8 +99,8 @@ def main() -> int:
     unsure_recall = exp_unsure_correct / exp_unsure if exp_unsure else None
     unsure_precision = pred_unsure_correct / pred_unsure if pred_unsure else None
     summary = {
-        "dataset": "hard" if hard else "standard",
-        "adapter": "mock",
+        "dataset": "hard" if hard else ("realstyle" if real else "standard"),
+        "adapter": adapter,
         "images": len(expected),
         "items_scored": total,
         "item_accuracy": round(accuracy, 4),

@@ -1,0 +1,26 @@
+{
+  "r01_pass": {
+    "screws_count": "PASS",
+    "led_left_of_button": "PASS",
+    "chip_present": "PASS",
+    "screws_aligned": "PASS"
+  },
+  "r02_missing": {
+    "screws_count": "FAIL",
+    "led_left_of_button": "PASS",
+    "chip_present": "PASS",
+    "screws_aligned": "PASS"
+  },
+  "r03_misaligned": {
+    "screws_count": "PASS",
+    "led_left_of_button": "PASS",
+    "chip_present": "PASS",
+    "screws_aligned": "FAIL"
+  },
+  "r04_blank": {
+    "screws_count": "UNSURE",
+    "led_left_of_button": "UNSURE",
+    "chip_present": "UNSURE",
+    "screws_aligned": "UNSURE"
+  }
+}

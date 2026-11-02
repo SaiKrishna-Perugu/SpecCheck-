@@ -129,6 +129,26 @@ agent says FAIL, because with the current checks a fully hidden part is
 indistinguishable from a missing one. Noise, JPEG artifacts, dark/bright
 exposure, blur, rotation, and half-occlusion all score correctly.
 
+Real-style set (`eval/realstyle/`, screenshots of the 3D board renderer:
+perspective, shading, shadows - closer to photos than clip-art), 16 items:
+
+| Adapter | Accuracy | False PASS |
+|---|---|---|
+| mock (palette) | 0.1875 | 0 |
+| fallback (classical) | 0.25 | 0 |
+| SAM 3.1 (`--adapter=meta`) | 0.375 | 0 |
+
+SAM is best but far from good on renders: it finds the chip reliably and
+misses small screws and the LED/button relation. Per-adapter detail is in
+`eval/realstyle/results-*.json`. No labelled phone photos exist yet;
+collecting 30+ real assembly photos is the top remaining work.
+
+Baseline comparison on the standard set: Muse Spark alone judging the
+photos (`scripts/baseline_vlm.py`) scored 0.75 accuracy with **2 false
+PASSes** and UNSURE recall 0.625, versus the deterministic pipeline's
+1.0 accuracy, 0 false PASSes, and UNSURE recall 1.0. That gap is the
+argument for measuring with code and letting the model only explain.
+
 ## Architecture
 
 Full diagram and component table: [docs/architecture.md](docs/architecture.md).

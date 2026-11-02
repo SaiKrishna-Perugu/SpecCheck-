@@ -195,27 +195,78 @@
   el('sampleMissing').addEventListener('click', function () { loadSample('missing'); });
   el('sampleBlank').addEventListener('click', function () { loadSample('blank'); });
 
+  // WAV capture via WebAudio (the real transcriber accepts WAV only).
+  var wavRec = null;
+  function encodeWav(samples, sampleRate) {
+    var buf = new ArrayBuffer(44 + samples.length * 2);
+    var v = new DataView(buf);
+    function ws(off, s) { for (var i = 0; i < s.length; i++) v.setUint8(off + i, s.charCodeAt(i)); }
+    ws(0, 'RIFF'); v.setUint32(4, 36 + samples.length * 2, true); ws(8, 'WAVEfmt ');
+    v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+    v.setUint32(24, sampleRate, true); v.setUint32(28, sampleRate * 2, true);
+    v.setUint16(32, 2, true); v.setUint16(34, 16, true); ws(36, 'data');
+    v.setUint32(40, samples.length * 2, true);
+    for (var i = 0; i < samples.length; i++) {
+      var s = Math.max(-1, Math.min(1, samples[i]));
+      v.setInt16(44 + i * 2, s < 0 ? s * 32768 : s * 32767, true);
+    }
+    return new Blob([buf], { type: 'audio/wav' });
+  }
+  function sendAudio(blob, name) {
+    el('micState').textContent = 'transcribing...';
+    var form = new FormData();
+    form.append('audio', blob, name);
+    fetch('/api/transcribe', { method: 'POST', body: form }).then(function (r) {
+      return r.json().then(function (d) { if (!r.ok) throw new Error(d.detail || 'transcribe failed'); return d; });
+    }).then(function (d) {
+      el('transcript').value = d.text || '';
+      el('micState').textContent = 'transcribed via ' + d.adapter + (d.mock ? ' (mock - canned text)' : '');
+      refreshIntent();
+    }).catch(function (err) { el('micState').textContent = 'transcribe error: ' + err.message; });
+  }
   el('mic').addEventListener('click', function () {
+    if (wavRec) {
+      var rec = wavRec; wavRec = null;
+      rec.node.disconnect(); rec.stream.getTracks().forEach(function (t) { t.stop(); });
+      rec.ctx.close();
+      // downsample to 16 kHz mono
+      var ratio = rec.ctx.sampleRate / 16000;
+      var out = new Float32Array(Math.floor(rec.data.length / ratio));
+      for (var i = 0; i < out.length; i++) out[i] = rec.data[Math.floor(i * ratio)];
+      sendAudio(encodeWav(out, 16000), 'command.wav');
+      return;
+    }
     if (recorder && recorder.state === 'recording') { recorder.stop(); return; }
-    if (!navigator.mediaDevices || !window.MediaRecorder) {
+    if (!navigator.mediaDevices) {
       el('micState').textContent = 'mic recording not available - type the command instead';
       return;
     }
     navigator.mediaDevices.getUserMedia({ audio: true }).then(function (s) {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (AC) {
+        var ctx = new AC();
+        var src = ctx.createMediaStreamSource(s);
+        var node = ctx.createScriptProcessor(4096, 1, 1);
+        var data = [];
+        node.onaudioprocess = function (e) { data.push(new Float32Array(e.inputBuffer.getChannelData(0))); };
+        src.connect(node); node.connect(ctx.destination);
+        wavRec = { ctx: ctx, node: node, stream: s, data: null };
+        wavRec._chunks = data;
+        Object.defineProperty(wavRec, 'data', { get: function () {
+          var len = data.reduce(function (a, c) { return a + c.length; }, 0);
+          var all = new Float32Array(len); var off = 0;
+          data.forEach(function (c) { all.set(c, off); off += c.length; });
+          return all;
+        } });
+        el('micState').textContent = 'recording WAV... click again to stop and transcribe';
+        return;
+      }
       chunks = [];
       recorder = new MediaRecorder(s);
       recorder.ondataavailable = function (e) { chunks.push(e.data); };
       recorder.onstop = function () {
         s.getTracks().forEach(function (t) { t.stop(); });
-        el('micState').textContent = 'transcribing...';
-        var blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
-        var form = new FormData();
-        form.append('audio', blob, 'command.webm');
-        fetch('/api/transcribe', { method: 'POST', body: form }).then(function (r) { return r.json(); }).then(function (d) {
-          el('transcript').value = d.text || '';
-          el('micState').textContent = 'transcribed via ' + d.adapter + (d.mock ? ' (mock - canned text)' : '');
-          refreshIntent();
-        }).catch(function (err) { el('micState').textContent = 'transcribe error: ' + err.message; });
+        sendAudio(new Blob(chunks, { type: recorder.mimeType || 'audio/webm' }), 'command.webm');
       };
       recorder.start();
       el('micState').textContent = 'recording... click again to stop';

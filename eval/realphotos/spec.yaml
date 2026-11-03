@@ -1,0 +1,10 @@
+name: real-photo-presence
+items:
+  - id: chip_present
+    label: chip
+    prompt: "black chip"
+    check: presence
+  - id: brick_present
+    label: brick
+    prompt: "plastic brick"
+    check: presence

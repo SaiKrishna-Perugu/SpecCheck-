@@ -1,0 +1,122 @@
+{
+  "pcb_05": {
+    "chip_present": "PASS",
+    "brick_present": "FAIL"
+  },
+  "pcb_06": {
+    "chip_present": "PASS",
+    "brick_present": "FAIL"
+  },
+  "pcb_07": {
+    "chip_present": "PASS",
+    "brick_present": "FAIL"
+  },
+  "pcb_08": {
+    "chip_present": "PASS",
+    "brick_present": "FAIL"
+  },
+  "pcb_17": {
+    "chip_present": "PASS",
+    "brick_present": "FAIL"
+  },
+  "pcb_18": {
+    "chip_present": "PASS",
+    "brick_present": "FAIL"
+  },
+  "pcb_12": {
+    "chip_present": "UNSURE",
+    "brick_present": "FAIL"
+  },
+  "pcb_13": {
+    "chip_present": "UNSURE",
+    "brick_present": "FAIL"
+  },
+  "pcb_14": {
+    "chip_present": "UNSURE",
+    "brick_present": "FAIL"
+  },
+  "pcb_01": {
+    "chip_present": "UNSURE",
+    "brick_present": "UNSURE"
+  },
+  "pcb_02": {
+    "chip_present": "UNSURE",
+    "brick_present": "UNSURE"
+  },
+  "pcb_03": {
+    "chip_present": "UNSURE",
+    "brick_present": "UNSURE"
+  },
+  "pcb_04": {
+    "chip_present": "UNSURE",
+    "brick_present": "UNSURE"
+  },
+  "pcb_09": {
+    "chip_present": "UNSURE",
+    "brick_present": "UNSURE"
+  },
+  "pcb_10": {
+    "chip_present": "UNSURE",
+    "brick_present": "UNSURE"
+  },
+  "pcb_11": {
+    "chip_present": "UNSURE",
+    "brick_present": "UNSURE"
+  },
+  "pcb_15": {
+    "chip_present": "UNSURE",
+    "brick_present": "UNSURE"
+  },
+  "pcb_16": {
+    "chip_present": "UNSURE",
+    "brick_present": "UNSURE"
+  },
+  "lego_01": {
+    "chip_present": "FAIL",
+    "brick_present": "PASS"
+  },
+  "lego_02": {
+    "chip_present": "FAIL",
+    "brick_present": "PASS"
+  },
+  "lego_06": {
+    "chip_present": "FAIL",
+    "brick_present": "PASS"
+  },
+  "lego_07": {
+    "chip_present": "FAIL",
+    "brick_present": "PASS"
+  },
+  "lego_09": {
+    "chip_present": "FAIL",
+    "brick_present": "PASS"
+  },
+  "lego_11": {
+    "chip_present": "FAIL",
+    "brick_present": "PASS"
+  },
+  "lego_12": {
+    "chip_present": "FAIL",
+    "brick_present": "PASS"
+  },
+  "lego_13": {
+    "chip_present": "FAIL",
+    "brick_present": "PASS"
+  },
+  "lego_14": {
+    "chip_present": "FAIL",
+    "brick_present": "PASS"
+  },
+  "lego_15": {
+    "chip_present": "FAIL",
+    "brick_present": "PASS"
+  },
+  "lego_16": {
+    "chip_present": "FAIL",
+    "brick_present": "PASS"
+  },
+  "lego_03": {
+    "chip_present": "UNSURE",
+    "brick_present": "UNSURE"
+  }
+}

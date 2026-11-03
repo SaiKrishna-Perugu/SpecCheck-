@@ -1,0 +1,437 @@
+{
+  "summary": {
+    "dataset": "realphotos",
+    "adapter": "meta",
+    "images": 30,
+    "items_scored": 60,
+    "item_accuracy": 0.75,
+    "images_fully_correct": 21,
+    "expected_unsure_items": 23,
+    "unsure_recall": 0.7826,
+    "predicted_unsure_items": 28,
+    "unsure_precision": 0.6429,
+    "false_pass_count": 4
+  },
+  "rows": [
+    {
+      "image": "lego_01",
+      "item": "brick_present",
+      "expected": "PASS",
+      "predicted": "PASS",
+      "correct": true
+    },
+    {
+      "image": "lego_01",
+      "item": "chip_present",
+      "expected": "FAIL",
+      "predicted": "FAIL",
+      "correct": true
+    },
+    {
+      "image": "lego_02",
+      "item": "brick_present",
+      "expected": "PASS",
+      "predicted": "PASS",
+      "correct": true
+    },
+    {
+      "image": "lego_02",
+      "item": "chip_present",
+      "expected": "FAIL",
+      "predicted": "FAIL",
+      "correct": true
+    },
+    {
+      "image": "lego_03",
+      "item": "brick_present",
+      "expected": "UNSURE",
+      "predicted": "UNSURE",
+      "correct": true
+    },
+    {
+      "image": "lego_03",
+      "item": "chip_present",
+      "expected": "UNSURE",
+      "predicted": "UNSURE",
+      "correct": true
+    },
+    {
+      "image": "lego_06",
+      "item": "brick_present",
+      "expected": "PASS",
+      "predicted": "PASS",
+      "correct": true
+    },
+    {
+      "image": "lego_06",
+      "item": "chip_present",
+      "expected": "FAIL",
+      "predicted": "FAIL",
+      "correct": true
+    },
+    {
+      "image": "lego_07",
+      "item": "brick_present",
+      "expected": "PASS",
+      "predicted": "PASS",
+      "correct": true
+    },
+    {
+      "image": "lego_07",
+      "item": "chip_present",
+      "expected": "FAIL",
+      "predicted": "FAIL",
+      "correct": true
+    },
+    {
+      "image": "lego_09",
+      "item": "brick_present",
+      "expected": "PASS",
+      "predicted": "UNSURE",
+      "correct": false
+    },
+    {
+      "image": "lego_09",
+      "item": "chip_present",
+      "expected": "FAIL",
+      "predicted": "UNSURE",
+      "correct": false
+    },
+    {
+      "image": "lego_11",
+      "item": "brick_present",
+      "expected": "PASS",
+      "predicted": "PASS",
+      "correct": true
+    },
+    {
+      "image": "lego_11",
+      "item": "chip_present",
+      "expected": "FAIL",
+      "predicted": "FAIL",
+      "correct": true
+    },
+    {
+      "image": "lego_12",
+      "item": "brick_present",
+      "expected": "PASS",
+      "predicted": "UNSURE",
+      "correct": false
+    },
+    {
+      "image": "lego_12",
+      "item": "chip_present",
+      "expected": "FAIL",
+      "predicted": "UNSURE",
+      "correct": false
+    },
+    {
+      "image": "lego_13",
+      "item": "brick_present",
+      "expected": "PASS",
+      "predicted": "PASS",
+      "correct": true
+    },
+    {
+      "image": "lego_13",
+      "item": "chip_present",
+      "expected": "FAIL",
+      "predicted": "FAIL",
+      "correct": true
+    },
+    {
+      "image": "lego_14",
+      "item": "brick_present",
+      "expected": "PASS",
+      "predicted": "PASS",
+      "correct": true
+    },
+    {
+      "image": "lego_14",
+      "item": "chip_present",
+      "expected": "FAIL",
+      "predicted": "FAIL",
+      "correct": true
+    },
+    {
+      "image": "lego_15",
+      "item": "brick_present",
+      "expected": "PASS",
+      "predicted": "UNSURE",
+      "correct": false
+    },
+    {
+      "image": "lego_15",
+      "item": "chip_present",
+      "expected": "FAIL",
+      "predicted": "UNSURE",
+      "correct": false
+    },
+    {
+      "image": "lego_16",
+      "item": "brick_present",
+      "expected": "PASS",
+      "predicted": "UNSURE",
+      "correct": false
+    },
+    {
+      "image": "lego_16",
+      "item": "chip_present",
+      "expected": "FAIL",
+      "predicted": "UNSURE",
+      "correct": false
+    },
+    {
+      "image": "pcb_01",
+      "item": "brick_present",
+      "expected": "UNSURE",
+      "predicted": "UNSURE",
+      "correct": true
+    },
+    {
+      "image": "pcb_01",
+      "item": "chip_present",
+      "expected": "UNSURE",
+      "predicted": "UNSURE",
+      "correct": true
+    },
+    {
+      "image": "pcb_02",
+      "item": "brick_present",
+      "expected": "UNSURE",
+      "predicted": "UNSURE",
+      "correct": true
+    },
+    {
+      "image": "pcb_02",
+      "item": "chip_present",
+      "expected": "UNSURE",
+      "predicted": "UNSURE",
+      "correct": true
+    },
+    {
+      "image": "pcb_03",
+      "item": "brick_present",
+      "expected": "UNSURE",
+      "predicted": "UNSURE",
+      "correct": true
+    },
+    {
+      "image": "pcb_03",
+      "item": "chip_present",
+      "expected": "UNSURE",
+      "predicted": "UNSURE",
+      "correct": true
+    },
+    {
+      "image": "pcb_04",
+      "item": "brick_present",
+      "expected": "UNSURE",
+      "predicted": "UNSURE",
+      "correct": true
+    },
+    {
+      "image": "pcb_04",
+      "item": "chip_present",
+      "expected": "UNSURE",
+      "predicted": "UNSURE",
+      "correct": true
+    },
+    {
+      "image": "pcb_05",
+      "item": "brick_present",
+      "expected": "FAIL",
+      "predicted": "FAIL",
+      "correct": true
+    },
+    {
+      "image": "pcb_05",
+      "item": "chip_present",
+      "expected": "PASS",
+      "predicted": "PASS",
+      "correct": true
+    },
+    {
+      "image": "pcb_06",
+      "item": "brick_present",
+      "expected": "FAIL",
+      "predicted": "FAIL",
+      "correct": true
+    },
+    {
+      "image": "pcb_06",
+      "item": "chip_present",
+      "expected": "PASS",
+      "predicted": "PASS",
+      "correct": true
+    },
+    {
+      "image": "pcb_07",
+      "item": "brick_present",
+      "expected": "FAIL",
+      "predicted": "FAIL",
+      "correct": true
+    },
+    {
+      "image": "pcb_07",
+      "item": "chip_present",
+      "expected": "PASS",
+      "predicted": "PASS",
+      "correct": true
+    },
+    {
+      "image": "pcb_08",
+      "item": "brick_present",
+      "expected": "FAIL",
+      "predicted": "FAIL",
+      "correct": true
+    },
+    {
+      "image": "pcb_08",
+      "item": "chip_present",
+      "expected": "PASS",
+      "predicted": "PASS",
+      "correct": true
+    },
+    {
+      "image": "pcb_09",
+      "item": "brick_present",
+      "expected": "UNSURE",
+      "predicted": "UNSURE",
+      "correct": true
+    },
+    {
+      "image": "pcb_09",
+      "item": "chip_present",
+      "expected": "UNSURE",
+      "predicted": "UNSURE",
+      "correct": true
+    },
+    {
+      "image": "pcb_10",
+      "item": "brick_present",
+      "expected": "UNSURE",
+      "predicted": "UNSURE",
+      "correct": true
+    },
+    {
+      "image": "pcb_10",
+      "item": "chip_present",
+      "expected": "UNSURE",
+      "predicted": "UNSURE",
+      "correct": true
+    },
+    {
+      "image": "pcb_11",
+      "item": "brick_present",
+      "expected": "UNSURE",
+      "predicted": "UNSURE",
+      "correct": true
+    },
+    {
+      "image": "pcb_11",
+      "item": "chip_present",
+      "expected": "UNSURE",
+      "predicted": "UNSURE",
+      "correct": true
+    },
+    {
+      "image": "pcb_12",
+      "item": "brick_present",
+      "expected": "FAIL",
+      "predicted": "FAIL",
+      "correct": true
+    },
+    {
+      "image": "pcb_12",
+      "item": "chip_present",
+      "expected": "UNSURE",
+      "predicted": "PASS",
+      "correct": false
+    },
+    {
+      "image": "pcb_13",
+      "item": "brick_present",
+      "expected": "FAIL",
+      "predicted": "FAIL",
+      "correct": true
+    },
+    {
+      "image": "pcb_13",
+      "item": "chip_present",
+      "expected": "UNSURE",
+      "predicted": "PASS",
+      "correct": false
+    },
+    {
+      "image": "pcb_14",
+      "item": "brick_present",
+      "expected": "FAIL",
+      "predicted": "FAIL",
+      "correct": true
+    },
+    {
+      "image": "pcb_14",
+      "item": "chip_present",
+      "expected": "UNSURE",
+      "predicted": "PASS",
+      "correct": false
+    },
+    {
+      "image": "pcb_15",
+      "item": "brick_present",
+      "expected": "UNSURE",
+      "predicted": "FAIL",
+      "correct": false
+    },
+    {
+      "image": "pcb_15",
+      "item": "chip_present",
+      "expected": "UNSURE",
+      "predicted": "PASS",
+      "correct": false
+    },
+    {
+      "image": "pcb_16",
+      "item": "brick_present",
+      "expected": "UNSURE",
+      "predicted": "UNSURE",
+      "correct": true
+    },
+    {
+      "image": "pcb_16",
+      "item": "chip_present",
+      "expected": "UNSURE",
+      "predicted": "UNSURE",
+      "correct": true
+    },
+    {
+      "image": "pcb_17",
+      "item": "brick_present",
+      "expected": "FAIL",
+      "predicted": "FAIL",
+      "correct": true
+    },
+    {
+      "image": "pcb_17",
+      "item": "chip_present",
+      "expected": "PASS",
+      "predicted": "PASS",
+      "correct": true
+    },
+    {
+      "image": "pcb_18",
+      "item": "brick_present",
+      "expected": "FAIL",
+      "predicted": "UNSURE",
+      "correct": false
+    },
+    {
+      "image": "pcb_18",
+      "item": "chip_present",
+      "expected": "PASS",
+      "predicted": "UNSURE",
+      "correct": false
+    }
+  ]
+}

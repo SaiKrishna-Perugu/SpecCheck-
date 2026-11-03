@@ -149,6 +149,26 @@ work, and this set is the bridge measurement until those photos exist.
 Hosting for judges (one-command local run, tunnel options, and why the
 public demo must run mock mode): [docs/hosting.md](docs/hosting.md).
 
+Real photos (`eval/realphotos/`, 30 labelled CC-licensed photos from
+Wikimedia Commons: PCBs, Lego, and non-assembly controls; credits in
+each folder's `credits.json`), 60 presence items scored with
+`uv run python eval/run_eval.py --photos --adapter=<name>`:
+
+| Adapter | Accuracy | UNSURE recall | False PASS |
+|---|---|---|---|
+| SAM 3.1 (meta) | 0.75 | 0.7826 | 4 |
+| fallback (classical) | 0.3833 | 1.0 (says UNSURE to everything) | 0 |
+
+First place a false PASS appears: SAM's "black chip" prompt matches
+dark Lego bricks in 4 items. Raising the presence confidence bar for
+real photos, or requiring mask compactness, is the next fix; both
+numbers are reported, not hidden.
+
+Public judge demo (mock adapter, no key, runs while the dev machine's
+tunnel is up): https://promotions-mpg-consortium-oregon.trycloudflare.com
+(classic UI) and https://promotions-mpg-consortium-oregon.trycloudflare.com/3d
+(3D board view).
+
 Baseline comparison on the standard set: Muse Spark alone judging the
 photos (`scripts/baseline_vlm.py`) scored 0.75 accuracy with **2 false
 PASSes** and UNSURE recall 0.625, versus the deterministic pipeline's

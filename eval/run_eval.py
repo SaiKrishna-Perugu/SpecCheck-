@@ -47,20 +47,25 @@ def _segmenter(name: str):
 def main() -> int:
     hard = "--hard" in sys.argv
     real = "--real" in sys.argv
+    photos = "--photos" in sys.argv
     adapter = "mock"
     for arg in sys.argv:
         if arg.startswith("--adapter="):
             adapter = arg.split("=", 1)[1]
-    dataset_dir = EVAL_DIR / "hard" if hard else (EVAL_DIR / "realstyle" if real else EVAL_DIR)
+    dataset_dir = (
+        EVAL_DIR / "hard" if hard
+        else (EVAL_DIR / "realphotos" if photos else (EVAL_DIR / "realstyle" if real else EVAL_DIR))
+    )
     gen = "eval/generate_hard_eval.py" if hard else ("eval/generate_realstyle_eval.py" if real else "eval/generate_eval.py")
     expected_path = dataset_dir / "expected.json"
     if not expected_path.exists():
         print(f"expected.json missing - run: uv run python {gen}")
         return 1
     expected: dict[str, dict[str, str]] = json.loads(expected_path.read_text())
-    spec = load_checklist_yaml(
-        (Path(__file__).resolve().parent.parent / "samples" / "demo_spec.yaml").read_text()
-    )
+    spec_path = dataset_dir / "spec.yaml"
+    if not spec_path.exists():
+        spec_path = Path(__file__).resolve().parent.parent / "samples" / "demo_spec.yaml"
+    spec = load_checklist_yaml(spec_path.read_text())
     segmenter, reasoner = _segmenter(adapter), MockReasoner()
 
     rows = []
@@ -72,6 +77,8 @@ def main() -> int:
 
     for name in sorted(expected):
         image_path = dataset_dir / "images" / f"{name}.png"
+        if not image_path.exists():
+            image_path = dataset_dir / "images" / f"{name}.jpg"
         image = np.asarray(Image.open(image_path).convert("RGB"))
         report = run_check(image, spec, segmenter, reasoner, attempt=1)
         predicted = {r.item_id: r.status.value for r in report.results}
@@ -99,7 +106,7 @@ def main() -> int:
     unsure_recall = exp_unsure_correct / exp_unsure if exp_unsure else None
     unsure_precision = pred_unsure_correct / pred_unsure if pred_unsure else None
     summary = {
-        "dataset": "hard" if hard else ("realstyle" if real else "standard"),
+        "dataset": "hard" if hard else ("realphotos" if photos else ("realstyle" if real else "standard")),
         "adapter": adapter,
         "images": len(expected),
         "items_scored": total,

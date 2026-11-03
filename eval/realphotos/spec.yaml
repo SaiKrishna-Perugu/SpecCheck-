@@ -4,7 +4,9 @@ items:
     label: chip
     prompt: "black chip"
     check: presence
+    min_confidence: 0.92
   - id: brick_present
     label: brick
     prompt: "plastic brick"
     check: presence
+    min_confidence: 0.92

@@ -21,6 +21,19 @@ from .types import (
 )
 
 
+def _occluded(seg: SegmentationResult, exclude_label: str) -> bool:
+    """True when a large other-label mask could be hiding the target.
+
+    A single foreground object covering over a quarter of the frame makes
+    'missing' indistinguishable from 'hidden', so absence becomes UNSURE.
+    """
+    return any(
+        c.area_fraction(seg.image_area_px) > 0.25
+        for c in seg.components
+        if c.label != exclude_label
+    )
+
+
 def _usable(
     item: ChecklistItem, seg: SegmentationResult, label: str
 ) -> tuple[list[SegmentedComponent], str | None]:
@@ -91,6 +104,12 @@ def check_count(item: ChecklistItem, seg: SegmentationResult) -> ChecklistItemRe
                 "confident enough to count.", reason,
             )
         if seg.components:
+            if _occluded(seg, item.label):
+                return _result(
+                    item, CheckStatus.UNSURE, measured, expected, ev,
+                    f"No '{item.label}' is visible, but a large foreground object "
+                    "could be hiding it.", "a large object may be occluding the part",
+                )
             return _result(
                 item, CheckStatus.FAIL, measured, expected, ev,
                 f"Expected {item.expected_count} x '{item.label}' but found none, while "
@@ -121,6 +140,11 @@ def check_presence(item: ChecklistItem, seg: SegmentationResult) -> ChecklistIte
         return _result(item, CheckStatus.PASS, measured, expected, ev,
                        f"'{item.label}' is present ({len(comps)} found).", None)
     if seg.components:
+        if _occluded(seg, item.label):
+            return _result(item, CheckStatus.UNSURE, measured, expected, ev,
+                           f"'{item.label}' is not visible, but a large foreground "
+                           "object could be hiding it.",
+                           "a large object may be occluding the part")
         return _result(item, CheckStatus.FAIL, measured, expected, ev,
                        f"'{item.label}' is missing.", None)
     return _result(item, CheckStatus.UNSURE, measured, expected, ev,

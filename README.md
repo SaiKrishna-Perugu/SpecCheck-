@@ -100,9 +100,9 @@ concrete visible concepts. Never commit `.env` or a real `META_API_KEY`.
 
 ## Demo video
 
-Animated walkthrough (3D orbit, scenarios, live check, classic UI):
-[docs/speccheck-demo.mp4](docs/speccheck-demo.mp4) (56s, recorded from
-the running app).
+Animated walkthrough (real PCB photo checked live by SAM 3.1, then the
+3D board): [docs/speccheck-demo.mp4](docs/speccheck-demo.mp4) (36s,
+recorded from the running app in meta mode).
 
 ## Eval
 
@@ -160,9 +160,22 @@ each folder's `credits.json`), 60 presence items scored with
 | fallback (classical) | 0.3833 | 1.0 (says UNSURE to everything) | 0 |
 
 First place a false PASS appears: SAM's "black chip" prompt matches
-dark Lego bricks in 4 items. Raising the presence confidence bar for
-real photos, or requiring mask compactness, is the next fix; both
-numbers are reported, not hidden.
+dark Lego bricks in 4 items. Confidence calibration
+(`scripts/calibrate_confidence.py`) showed those matches stay confident
+until 0.92, so the real-photo spec now requires `min_confidence: 0.92`:
+re-scored, SAM drops to 0.5167 accuracy but **0 false PASSes**, with the
+misses becoming UNSURE instead of wrong. Both operating points are kept
+(`results-meta.json` uncalibrated, `results-meta-calibrated.json`
+calibrated); the shipped default chooses safety over accuracy.
+
+Voice is verified end-to-end with synthesized speech
+(`scripts/verify_voice_e2e.py`): four spoken commands (full check,
+single item, recount, explain) were transcribed by the real API and
+mapped to the correct intents, 4/4. The API requires mono WAV at
+16000/24000 Hz, which is why the browser records WAV via WebAudio.
+Occlusion handling: when a part is missing but another mask covers over
+a quarter of the frame, the verdict is now UNSURE ("may be occluded")
+instead of FAIL.
 
 Public judge demo (mock adapter, no key, runs while the dev machine's
 tunnel is up): https://promotions-mpg-consortium-oregon.trycloudflare.com

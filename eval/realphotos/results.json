@@ -1,15 +1,15 @@
 {
   "summary": {
     "dataset": "realphotos",
-    "adapter": "fallback",
+    "adapter": "meta",
     "images": 30,
     "items_scored": 60,
-    "item_accuracy": 0.3833,
-    "images_fully_correct": 10,
+    "item_accuracy": 0.5167,
+    "images_fully_correct": 9,
     "expected_unsure_items": 23,
-    "unsure_recall": 1.0,
-    "predicted_unsure_items": 60,
-    "unsure_precision": 0.3833,
+    "unsure_recall": 0.7826,
+    "predicted_unsure_items": 30,
+    "unsure_precision": 0.6,
     "false_pass_count": 0
   },
   "rows": [
@@ -17,7 +17,7 @@
       "image": "lego_01",
       "item": "brick_present",
       "expected": "PASS",
-      "predicted": "UNSURE",
+      "predicted": "FAIL",
       "correct": false
     },
     {
@@ -31,15 +31,15 @@
       "image": "lego_02",
       "item": "brick_present",
       "expected": "PASS",
-      "predicted": "UNSURE",
+      "predicted": "FAIL",
       "correct": false
     },
     {
       "image": "lego_02",
       "item": "chip_present",
       "expected": "FAIL",
-      "predicted": "UNSURE",
-      "correct": false
+      "predicted": "FAIL",
+      "correct": true
     },
     {
       "image": "lego_03",
@@ -59,21 +59,21 @@
       "image": "lego_06",
       "item": "brick_present",
       "expected": "PASS",
-      "predicted": "UNSURE",
+      "predicted": "FAIL",
       "correct": false
     },
     {
       "image": "lego_06",
       "item": "chip_present",
       "expected": "FAIL",
-      "predicted": "UNSURE",
-      "correct": false
+      "predicted": "FAIL",
+      "correct": true
     },
     {
       "image": "lego_07",
       "item": "brick_present",
       "expected": "PASS",
-      "predicted": "UNSURE",
+      "predicted": "FAIL",
       "correct": false
     },
     {
@@ -101,15 +101,15 @@
       "image": "lego_11",
       "item": "brick_present",
       "expected": "PASS",
-      "predicted": "UNSURE",
+      "predicted": "FAIL",
       "correct": false
     },
     {
       "image": "lego_11",
       "item": "chip_present",
       "expected": "FAIL",
-      "predicted": "UNSURE",
-      "correct": false
+      "predicted": "FAIL",
+      "correct": true
     },
     {
       "image": "lego_12",
@@ -129,29 +129,29 @@
       "image": "lego_13",
       "item": "brick_present",
       "expected": "PASS",
-      "predicted": "UNSURE",
+      "predicted": "FAIL",
       "correct": false
     },
     {
       "image": "lego_13",
       "item": "chip_present",
       "expected": "FAIL",
-      "predicted": "UNSURE",
-      "correct": false
+      "predicted": "FAIL",
+      "correct": true
     },
     {
       "image": "lego_14",
       "item": "brick_present",
       "expected": "PASS",
-      "predicted": "UNSURE",
+      "predicted": "FAIL",
       "correct": false
     },
     {
       "image": "lego_14",
       "item": "chip_present",
       "expected": "FAIL",
-      "predicted": "UNSURE",
-      "correct": false
+      "predicted": "FAIL",
+      "correct": true
     },
     {
       "image": "lego_15",
@@ -241,56 +241,56 @@
       "image": "pcb_05",
       "item": "brick_present",
       "expected": "FAIL",
-      "predicted": "UNSURE",
-      "correct": false
+      "predicted": "FAIL",
+      "correct": true
     },
     {
       "image": "pcb_05",
       "item": "chip_present",
       "expected": "PASS",
-      "predicted": "UNSURE",
+      "predicted": "FAIL",
       "correct": false
     },
     {
       "image": "pcb_06",
       "item": "brick_present",
       "expected": "FAIL",
-      "predicted": "UNSURE",
-      "correct": false
+      "predicted": "FAIL",
+      "correct": true
     },
     {
       "image": "pcb_06",
       "item": "chip_present",
       "expected": "PASS",
-      "predicted": "UNSURE",
+      "predicted": "FAIL",
       "correct": false
     },
     {
       "image": "pcb_07",
       "item": "brick_present",
       "expected": "FAIL",
-      "predicted": "UNSURE",
-      "correct": false
+      "predicted": "FAIL",
+      "correct": true
     },
     {
       "image": "pcb_07",
       "item": "chip_present",
       "expected": "PASS",
-      "predicted": "UNSURE",
+      "predicted": "FAIL",
       "correct": false
     },
     {
       "image": "pcb_08",
       "item": "brick_present",
       "expected": "FAIL",
-      "predicted": "UNSURE",
-      "correct": false
+      "predicted": "FAIL",
+      "correct": true
     },
     {
       "image": "pcb_08",
       "item": "chip_present",
       "expected": "PASS",
-      "predicted": "UNSURE",
+      "predicted": "FAIL",
       "correct": false
     },
     {
@@ -339,57 +339,57 @@
       "image": "pcb_12",
       "item": "brick_present",
       "expected": "FAIL",
-      "predicted": "UNSURE",
-      "correct": false
+      "predicted": "FAIL",
+      "correct": true
     },
     {
       "image": "pcb_12",
       "item": "chip_present",
       "expected": "UNSURE",
-      "predicted": "UNSURE",
-      "correct": true
+      "predicted": "FAIL",
+      "correct": false
     },
     {
       "image": "pcb_13",
       "item": "brick_present",
       "expected": "FAIL",
-      "predicted": "UNSURE",
-      "correct": false
+      "predicted": "FAIL",
+      "correct": true
     },
     {
       "image": "pcb_13",
       "item": "chip_present",
       "expected": "UNSURE",
-      "predicted": "UNSURE",
-      "correct": true
+      "predicted": "FAIL",
+      "correct": false
     },
     {
       "image": "pcb_14",
       "item": "brick_present",
       "expected": "FAIL",
-      "predicted": "UNSURE",
-      "correct": false
+      "predicted": "FAIL",
+      "correct": true
     },
     {
       "image": "pcb_14",
       "item": "chip_present",
       "expected": "UNSURE",
-      "predicted": "UNSURE",
-      "correct": true
+      "predicted": "FAIL",
+      "correct": false
     },
     {
       "image": "pcb_15",
       "item": "brick_present",
       "expected": "UNSURE",
-      "predicted": "UNSURE",
-      "correct": true
+      "predicted": "FAIL",
+      "correct": false
     },
     {
       "image": "pcb_15",
       "item": "chip_present",
       "expected": "UNSURE",
-      "predicted": "UNSURE",
-      "correct": true
+      "predicted": "FAIL",
+      "correct": false
     },
     {
       "image": "pcb_16",
@@ -409,14 +409,14 @@
       "image": "pcb_17",
       "item": "brick_present",
       "expected": "FAIL",
-      "predicted": "UNSURE",
-      "correct": false
+      "predicted": "FAIL",
+      "correct": true
     },
     {
       "image": "pcb_17",
       "item": "chip_present",
       "expected": "PASS",
-      "predicted": "UNSURE",
+      "predicted": "FAIL",
       "correct": false
     },
     {

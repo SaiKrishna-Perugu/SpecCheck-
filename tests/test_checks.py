@@ -85,6 +85,15 @@ def test_alignment_line_fit_tolerates_rotation_but_not_stray():
     assert stray.status == CheckStatus.FAIL
 
 
+def test_occluded_part_is_unsure_not_fail():
+    # Huge button blob (>25% of frame) and no chip: chip may be hidden.
+    image = samples.draw_parts([("button", 10, 10, 170, 130)])
+    seg = _seg(image)
+    result = run_check(_item("chip_present"), seg)
+    assert result.status == CheckStatus.UNSURE
+    assert "occlud" in (result.recapture_reason or "")
+
+
 def test_area_ratio_bounds():
     item = ChecklistItem(
         id="chip_area", label="chip", check="area_ratio",
